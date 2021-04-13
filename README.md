@@ -48,7 +48,7 @@ Pulls information from the game and updates the bot's information.
 **tiles**:
 Displays currently held tiles in the kingdom.
 
-**timer <subcommand>**:  
+**timer \<subcommand>**:  
 *Subcommand: pause, restart, or info*  
 **pause**: Pauses the timer.  
 **restart**: Restarts the timer.  

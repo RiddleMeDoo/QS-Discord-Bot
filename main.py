@@ -18,7 +18,7 @@ async def help(ctx):
   em.add_field(name="Bind",value=" >bind",inline=False)
   em.add_field(name="Update",value=">update",inline=False)
   em.add_field(name="Tiles",value=">tiles",inline=False)
-  em.add_field(name="Timer",value=">timer [pause|restart|info]",inline=False)
+  em.add_field(name="Timer",value=">timer [stop|restart|info]",inline=False)
 
   await ctx.send(embed=em)
 
@@ -53,7 +53,7 @@ async def help_tiles(ctx):
 @help.command(name="timer")
 async def help_timer(ctx):
   em = discord.Embed(title="Timer", description="Has commands related to the exploration timer.", color=ctx.author.color)
-  em.add_field(name="pause",value="Pauses the timer.",inline=False)
+  em.add_field(name="stop",value="Stops the timer.",inline=False)
   em.add_field(name="restart",value="Restarts the timer.",inline=False)
   em.add_field(name="info",value="Displays when the exploration will end.",inline=False)
   em.add_field(name="**Usage**",value=">timer <subcommand>",inline=False)
@@ -92,7 +92,7 @@ async def set_channel(ctx):
 @client.group(invoke_without_command=True)
 async def timer(ctx):
   em = discord.Embed(title="Subcommands", description="", color=ctx.author.color)
-  em.add_field(name="pause",value="Pauses the timer.",inline=False)
+  em.add_field(name="stop",value="Stops the timer.",inline=False)
   em.add_field(name="restart",value="Restarts the timer.",inline=False)
   em.add_field(name="info",value="Displays when the exploration will end.",inline=False)
   em.add_field(name="**Usage**",value=">timer <subcommand>",inline=False)
@@ -100,27 +100,22 @@ async def timer(ctx):
   await ctx.send("Please use a subcommand below.", embed=em)
 
 
-@timer.command(name="pause")
-async def pause_scheduler(ctx):
-  client.scheduler.pause()
-  await ctx.send("Paused the timer.")
+@timer.command(name="stop")
+async def stop_timer(ctx):
+  await client.stop_timer()
+  await ctx.send("Stopped the timer.")
 
 
 @timer.command(name="restart")
-async def restart_scheduler(ctx):
-  client.scheduler.remove_job("exploration")
-  client.scheduler.shutdown(wait=False)
-  await client.update_info()
+async def restart_timer(ctx):
+  await client.restart_timer()
   await ctx.send("Restarted the timer.")
   await print_timer(ctx)
 
 
 @timer.command(name="info")
 async def print_timer(ctx):
-  if client.is_exploration_done():
-    await ctx.send("There is no exploration running at the moment. No timer is running.")
-  else:
-    await ctx.send("The exploration will finish in {}, on {}".format(client.get_time_remaining(), client.get_exploration_date()))
+  await ctx.send(client.get_exploration_timer())
 
 
 @client.event

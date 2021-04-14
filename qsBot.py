@@ -5,6 +5,8 @@ import os
 import aiohttp
 from datetime import datetime
 from replit import db
+from tile import Tile
+from exploration import Exploration
 
 class QueslarBot(commands.Bot):
   '''
@@ -19,6 +21,10 @@ class QueslarBot(commands.Bot):
     self.notificationChannel = None #Initialized in setup_loop
     self.tagId = os.getenv("TAG")
 
+    self.tiles = [Tile(t) for t in db.get("tiles", [])]
+    self.mystery = db.get("mystery","???")
+    
+    self.exploration = Exploration(db.get("exploration_timer","2000-01-01T00:00:00.000Z"))
     self.scheduler = AsyncIOScheduler({'apscheduler.timezone': 'UTC'})
 
     self.update_info.start()
@@ -29,8 +35,8 @@ class QueslarBot(commands.Bot):
     Sends a message to the notification channel when
     the exploration finishes.
     '''
-    print("Alert <@&{}>: Exploration done.".format(self.tagId))
-    await self.notificationChannel.send("Expedition done!")
+    print("Alert: Exploration done.".format(self.tagId))
+    await self.notificationChannel.send("<@&{}> Exploration done!")
 
 
   async def alert_test(self):
@@ -45,7 +51,7 @@ class QueslarBot(commands.Bot):
   async def update_info(self):
     '''
     Updates the database from the API server, sends messages if
-    tiles change, and starts a timer for kd expeditions if one 
+    tiles change, and starts a timer for kd explorations if one 
     is running.
     '''
     #print("{}> Updating info".format(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
@@ -55,10 +61,17 @@ class QueslarBot(commands.Bot):
     data = await self.get_qs_data()
     if(data):
       try:
+        #Update only if anything changed
         await self.update_tile_status(data["kingdom"]["tiles"])
-        if("mapMisc" in data["kingdom"]):
-          db["mystery"] = data["kingdom"]["mapMisc"]["mystery_tile"]
-        db["exploration_timer"] = data["kingdom"]["activeExploration"]["exploration_timer"]
+        if "mapMisc" in data["kingdom"] and self.mystery != data["kingdom"]["mapMisc"]["mystery_tile"]:
+          self.mystery = data["kingdom"]["mapMisc"]["mystery_tile"]
+          db["mystery"] = self.mystery
+
+        dataExplo = Exploration(data["kingdom"]["activeExploration"]["exploration_timer"])
+        if self.exploration != dataExplo:
+          db["exploration_timer"] = data["kingdom"]["activeExploration"]["exploration_timer"]
+          self.exploration = dataExplo
+
         db["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         success = True
       except KeyError as e:
@@ -67,8 +80,8 @@ class QueslarBot(commands.Bot):
       print("{}> Failed to get API data".format(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
 
     # Start exploration timer if there isn't one
-    if len(self.scheduler.get_jobs()) == 0 and not self.is_exploration_done():
-      end = self.get_exploration_date()
+    if len(self.scheduler.get_jobs()) == 0 and not self.exploration.is_done():
+      end = self.exploration.get_end_time()
       self.scheduler.add_job(self.alert_exploration, "date", run_date=end, id='exploration')
       #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='exploration') #Debugging alerts
       print("Starting alert for {} UTC...".format(end))
@@ -99,43 +112,38 @@ class QueslarBot(commands.Bot):
           return {}
 
 
-  async def update_tile_status(self, newTiles):
+  async def update_tile_status(self, tiles):
     '''
     Sends a message to the notification channel if 
     tiles have changed since the last update.
-    It uses newTiles and the database's tiles for
+    It uses newTiles and the current (old) tiles for
     comparison.
     '''
     i, j = 0, 0
     lost, gained = [], []
-    oldTiles = db["tiles"]
+    oldTiles = self.tiles
+    newTiles = [Tile(t) for t in tiles]
     # Iterate through the tiles and compare changes
     while i < len(oldTiles) and j < len(newTiles):
-      if oldTiles[i]["id"] == newTiles[j]["id"]:
+      if oldTiles[i].id == newTiles[j].id:
         i += 1
         j += 1
-      elif oldTiles[i]["id"] < newTiles[j]["id"]:
-        lost.append((oldTiles[i]["id"], self.get_tile_str(oldTiles[i])))
+      elif oldTiles[i].id < newTiles[j].id:
+        lost.append((oldTiles[i].get_coords(), str(oldTiles[i])))
         i += 1
       else:
-        gained.append((newTiles[j]["id"], self.get_tile_str(newTiles[j])))
+        gained.append((newTiles[j].get_coords(), str(newTiles[j])))
         j += 1
     if len(oldTiles) < len(newTiles):
-      gained += [(tile["id"], self.get_tile_str(tile)) for tile in newTiles[j:]]
+      gained += [(tile.get_coords(), str(tile)) for tile in newTiles[j:]]
     elif len(oldTiles) > len(newTiles):
-      lost += [(tile["id"], self.get_tile_str(tile)) for tile in oldTiles[i:]]
+      lost += [(tile.get_coords(), str(tile)) for tile in oldTiles[i:]]
     
     #Send result to channel
-    await self.post_tile_update(gained, lost)
-    db["tiles"] = newTiles #Update db after finishing
-
-
-  def is_exploration_done(self):
-    '''
-    Returns True if the exploration time in the database
-    has passed. 
-    '''
-    return datetime.utcnow() > self.get_exploration_date()
+    if len(gained) != 0 or len(lost) != 0:
+      await self.post_tile_update(gained, lost)
+      self.tiles = newTiles
+      db["tiles"] = tiles #Update db if anything changed
 
 
   def set_notification_channel(self, channel):
@@ -146,63 +154,15 @@ class QueslarBot(commands.Bot):
     self.notificationChannel = channel
 
 
-  def get_exploration_date(self):
-    '''
-    Returns a datetime format of the exploration timer.
-    Note: Return type is not a string but a date
-    Database format: 2021-04-07T06:13:29.000Z
-    datetime format: 2021-04-07 06:13:29
-    '''
-    return datetime.strptime(db["exploration_timer"], "%Y-%m-%dT%H:%M:%S.000Z")
-
-
-  def get_time_remaining(self):
-    '''
-    Returns the time remaining until the exploration finishes.
-    '''
-    diff = self.get_exploration_date() - datetime.utcnow()
-    days, seconds = diff.days, diff.seconds
-    hours = (days * 24 + seconds // 3600) % 24
-    minutes = (seconds % 3600) // 60
-    seconds = seconds % 60
-
-    return "{} days {} hours {} minutes {} seconds".format(days, hours, minutes, seconds)
-
-
-  def to_coords(self, index):
-    '''
-    Returns a string representation of (column,row) 
-    given an index (from the map)
-    '''
-    y = (index - 1) // 5 + 1
-    x = (index - 1) % 5 + 1
-    return "({},{})".format(x, y)  
-
-
   def get_tiles(self):
     '''
     Returns an embed featuring all tiles held by the kd
     '''
     embed = discord.Embed(title="Kingdom Tiles", color=0x0080c0)
-    for tile in db["tiles"]:
-      tileType = self.get_tile_str(tile)
-        
-      embed.add_field(name=self.to_coords(tile["id"]), value=tileType, inline=True)
+    for tile in self.tiles:
+      embed.add_field(name=tile.get_coords(), value=str(tile), inline=True)
     embed.set_footer(text="Last updated: {} UTC".format(db["last_updated"]))
     return embed
-
-  def get_tile_str(self, tile):
-    '''
-    Returns the string representation of a tile
-    '''
-    if tile["type"] == "Minor" or tile["name"] == "Wild":
-      if tile["resource_one_type"] == "mystery":
-        tileType = "mystery({}) {}%".format(db["mystery"], tile["resource_one_value"])
-      else:
-        tileType = "{} {}%".format(tile["resource_one_type"], tile["resource_one_value"])
-    else:  #Major tile
-      tileType = "{} {}%, {} {}%, {} {}%".format(tile["resource_one_type"],tile["resource_one_value"],tile["resource_two_type"],tile["resource_two_value"],tile["resource_three_type"],tile["resource_three_value"])
-    return tileType
 
 
   async def post_tile_update(self, gained, lost):
@@ -215,12 +175,27 @@ class QueslarBot(commands.Bot):
     
     if len(gained) != 0:
       gainedMsg = discord.Embed(title="Tile(s) Gained:", color=0x00ff00)
-      for position, boostType in gained:
-        gainedMsg.add_field(name=self.to_coords(position), value=boostType, inline=False)
+      for coords, boostType in gained:
+        gainedMsg.add_field(name=coords, value=boostType, inline=False)
       await self.notificationChannel.send(embed=gainedMsg)
 
     if len(lost) != 0:
       lostMsg = discord.Embed(title="Tile(s) Lost:", color=0xce0000)
-      for position, boostType in lost:
-        lostMsg.add_field(name=self.to_coords(position), value=boostType, inline=False)
+      for coords, boostType in lost:
+        lostMsg.add_field(name=coords, value=boostType, inline=False)
       await self.notificationChannel.send("<@&{}>".format(self.tagId) , embed=lostMsg)
+
+  async def stop_timer(self):
+    self.scheduler.pause()
+    self.scheduler.remove_job("exploration")
+    self.scheduler.shutdown(wait=False)
+
+  async def restart_timer(self):
+    await self.update_info()
+
+  def get_exploration_timer(self):
+    if len(self.scheduler.get_jobs()) == 0:
+      return "The timer has stopped."
+
+    return str(self.exploration)
+  

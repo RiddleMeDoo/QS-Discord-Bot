@@ -1,4 +1,4 @@
-# QS-Discord-Bot
+# QS Discord Bot
 A Discord bot for the browser game called Queslar.
 
 ## Table of Contents
@@ -9,7 +9,7 @@ A Discord bot for the browser game called Queslar.
 --------------
 
 ### About
-This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It is hosted on Repl.it (for now) and uses its custom database to store data. It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)).
+This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It is hosted on Repl.it (for now) and uses its custom database to store data. It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)) with an object-oriented approach.
 
 
 ### Setup
@@ -49,7 +49,7 @@ Pulls information from the game and updates the bot's information.
 Displays currently held tiles in the kingdom.
 
 **timer \<subcommand>**:  
-*Subcommand: pause, restart, or info*  
-**pause**: Pauses the timer.  
+*Subcommand: stop, restart, or info*  
+**stop**: Stops the timer.  
 **restart**: Restarts the timer.  
 **info**: Displays when the exploration will end.  

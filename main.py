@@ -1,7 +1,7 @@
 import os
 from qsBot import QueslarBot
 import discord
-from discord.ext.commands import CommandNotFound
+from discord.ext.commands import CommandNotFound, MissingRole, has_role
 
 client = QueslarBot(command_prefix=">", help_command=None)
 
@@ -10,6 +10,8 @@ client = QueslarBot(command_prefix=">", help_command=None)
 async def on_ready():
   print("Logged in as {}".format(client.user))
 
+
+my_secret = os.environ['TOKEN']
 
 @client.group(invoke_without_command=True)
 async def help(ctx):
@@ -66,6 +68,7 @@ async def ping(ctx):
   await ctx.send("Pong!")
 
 @client.command()
+@has_role("Leader")
 async def test(ctx):
   await client.alert_test()
 
@@ -84,6 +87,7 @@ async def get_tiles(ctx):
 
 
 @client.command(name="bind")
+@has_role("Leader")
 async def set_channel(ctx):
   client.set_notification_channel(ctx.channel)
   await ctx.send("Bound notifications to this channel.")
@@ -101,12 +105,14 @@ async def timer(ctx):
 
 
 @timer.command(name="stop")
+@has_role("Leader")
 async def stop_timer(ctx):
   await client.stop_timer()
   await ctx.send("Stopped the timer.")
 
 
 @timer.command(name="restart")
+@has_role("Leader")
 async def restart_timer(ctx):
   await client.restart_timer()
   await ctx.send("Restarted the timer.")
@@ -123,7 +129,10 @@ async def on_command_error(ctx, err):
   if isinstance(err, CommandNotFound):
     await ctx.send("Command not available. Use >help for a list of commands.")
     return
+  elif isinstance(err, MissingRole):
+    await ctx.send("Only leaders can use this command.")
+    return
   raise err
 
 
-client.run(os.getenv('TOKEN'))
+client.run(os.environ['TOKEN'])

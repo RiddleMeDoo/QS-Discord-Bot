@@ -40,8 +40,8 @@ Shows the commands that can be given
 **ping**:
 The bot will send respond if it is active.
 
-**bind**:
-Binds the bot to the current channel. The bot will only be able to send messages in the bound channel.
+**bind** (privileged command):
+Binds the bot to the current channel. The bot will only be able to send messages in the bound channel. Only users with the role "Leader" may use it.
 
 **update**:
 Pulls information from the game and updates the bot's information.
@@ -49,8 +49,9 @@ Pulls information from the game and updates the bot's information.
 **tiles**:
 Displays currently held tiles in the kingdom.
 
-**timer \<subcommand>**:  
+**timer \<subcommand>** (privileged command):  
 *Subcommand: stop, restart, or info*  
+Only users with the role "Leader" may use it.  
 **stop**: Stops the timer.  
 **restart**: Restarts the timer.  
 **info**: Displays when the exploration will end.  

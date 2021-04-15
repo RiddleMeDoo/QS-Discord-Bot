@@ -16,10 +16,10 @@ class QueslarBot(commands.Bot):
   def __init__(self,  *args, **kwargs):
     super().__init__(*args, **kwargs)
     if "channelId" not in db:
-      db["channelId"] = int(os.getenv("NOTIFY_CHANNEL"))
+      db["channelId"] = os.environ['NOTIFY_CHANNEL']
     
     self.notificationChannel = None #Initialized in setup_loop
-    self.tagId = os.getenv("TAG")
+    self.tagId = os.environ['TAG']
 
     self.tiles = [Tile(t) for t in db.get("tiles", [])]
     self.mystery = db.get("mystery","???")
@@ -75,7 +75,7 @@ class QueslarBot(commands.Bot):
         db["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         success = True
       except KeyError as e:
-        await self.notificationChannel.send("Failed to index {} in API data".format(str(e)))
+        print("Failed to index {} in API data".format(str(e)))
     else:  
       print("{}> Failed to get API data".format(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
 
@@ -104,7 +104,7 @@ class QueslarBot(commands.Bot):
     Returns player data from the API server
     '''
     async with aiohttp.ClientSession() as session:
-      async with session.get('https://queslar.com/api/player/full/'+os.getenv('QS_KEY')) as res:
+      async with session.get('https://queslar.com/api/player/full/'+os.environ['QS_KEY']) as res:
         if res.status == 200:
           return await res.json()
         else:

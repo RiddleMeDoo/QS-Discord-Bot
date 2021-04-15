@@ -13,7 +13,7 @@ This repository contains code to set up a Discord bot for the PBBG called Quesla
 
 
 ### Setup
-First, create a discord bot and set up the hosting solution of your choice. If you are not using Repl.it please edit the code accordingly to store data elsewhere.
+First, create a discord bot and set up the hosting solution of your choice. If you are not using Repl.it please edit the code accordingly to store data elsewhere. Repl.it also has different syntax to access environment variables.
 
 To set this bot up, you will need the following:
 - A discord bot's token
@@ -21,7 +21,8 @@ To set this bot up, you will need the following:
 - The channel id that the bot will send messages to.
 - The role id of that the bot should tag for notifications.
 
-Put them into a file called .env with the following format:  
+If you are not using Repl.it, copy and paste the following into a file called .env with the same format:
+If you are using Repl.it, put them into the secrets tab (found on the left side bar) with the following:  
 ```
 TOKEN=[Token]  
 QS_KEY=[API key]  

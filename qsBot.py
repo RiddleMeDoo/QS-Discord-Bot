@@ -44,7 +44,7 @@ class QueslarBot(commands.Bot):
     Debugging method for sending test message
     '''
     print("Alert test")
-    await self.notificationChannel.send("Test alert <@&{}>".format(self.tagId))
+    await self.notificationChannel.send("Test alert @here")
   
 
   @tasks.loop(minutes=5)
@@ -183,7 +183,7 @@ class QueslarBot(commands.Bot):
       lostMsg = discord.Embed(title="Tile(s) Lost:", color=0xce0000)
       for coords, boostType in lost:
         lostMsg.add_field(name=coords, value=boostType, inline=False)
-      await self.notificationChannel.send("<@&{}>".format(self.tagId) , embed=lostMsg)
+      await self.notificationChannel.send("@here", embed=lostMsg)
 
   async def stop_timer(self):
     self.scheduler.pause()

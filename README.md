@@ -29,7 +29,8 @@ QS_KEY=[API key]
 NOTIFY_CHANNEL=[Channel Id]  
 TAG=[roleId]
 ```
-Invite the bot to the server and let the program run.
+Invite the bot to the server and let the program run.  
+`NOTE: Make sure the bot can mention @here and the leader role.`
 
 ### Bot Commands
 Prefix: ">"

@@ -28,6 +28,7 @@ class QueslarBot(commands.Bot):
     self.scheduler = AsyncIOScheduler({'apscheduler.timezone': 'UTC'})
 
     self.update_info.start()
+    self.scheduler.start()
   
 
   async def alert_exploration(self):
@@ -36,7 +37,7 @@ class QueslarBot(commands.Bot):
     the exploration finishes.
     '''
     print("Alert: Exploration done.".format(self.tagId))
-    await self.notificationChannel.send("<@&{}> Exploration done!")
+    await self.notificationChannel.send("<@&{}> Exploration done!".format(self.tagId))
 
 
   async def alert_test(self):
@@ -85,7 +86,6 @@ class QueslarBot(commands.Bot):
       self.scheduler.add_job(self.alert_exploration, "date", run_date=end, id='exploration')
       #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='exploration') #Debugging alerts
       print("Starting alert for {} UTC...".format(end))
-      self.scheduler.start()
     
     return success
 
@@ -188,9 +188,9 @@ class QueslarBot(commands.Bot):
   async def stop_timer(self):
     self.scheduler.pause()
     self.scheduler.remove_job("exploration")
-    self.scheduler.shutdown(wait=False)
 
   async def restart_timer(self):
+    self.scheduler.resume()
     await self.update_info()
 
   def get_exploration_timer(self):

@@ -56,7 +56,7 @@ class Market:
     Returns True if the most recent timestamp occured more 
     than 1 hour ago.
     '''
-    diff = datetime.strptime(db["market_last_updated"], "%Y-%m-%dT%H:%M:%S.000Z") - datetime.utcnow()
+    diff = datetime.strptime(db.get("market_last_updated", "2000-01-01T00:00:00.000Z"), "%Y-%m-%dT%H:%M:%S.000Z") - datetime.utcnow()
     minutes = (diff.seconds % 3600) // 60
     return minutes > 60
 

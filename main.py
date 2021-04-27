@@ -1,9 +1,9 @@
 import os
 from qsBot import QueslarBot
 import discord
-from discord.ext.commands import CommandNotFound, MissingRole, has_role
+from discord.ext.commands import CommandNotFound, MissingRole, has_role, MissingRequiredArgument
 
-client = QueslarBot(command_prefix=">", help_command=None)
+client = QueslarBot(command_prefix="!", help_command=None)
 
 
 @client.event
@@ -95,8 +95,8 @@ async def set_channel(ctx):
 
 @client.command(name="player")
 async def view_investments(ctx, key):
-  msg = client.get_player_investments(key)
-  ctx.send(msg)
+  msg = await client.get_player_investments(key)
+  await ctx.send(msg)
 
 
 @client.group(invoke_without_command=True)
@@ -137,6 +137,9 @@ async def on_command_error(ctx, err):
     return
   elif isinstance(err, MissingRole):
     await ctx.send("Only leaders can use this command.")
+    return
+  elif isinstance(err, MissingRequiredArgument):
+    await ctx.send("Please add an api key to the command.")
     return
   raise err
 

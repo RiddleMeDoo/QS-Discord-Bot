@@ -19,7 +19,7 @@ class Tile:
   def parse_tile(self, tile):
     if tile["type"] == "Minor" or tile["name"] == "Wild":
       if tile["resource_one_type"] == "mystery":
-        tileType = ["mystery({})".format(db["mystery"])]
+        tileType = ["mystery({})".format(db.get("mystery"), "???")]
       else:
         tileType = [tile["resource_one_type"]]
       bonus = [tile["resource_one_value"]]

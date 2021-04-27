@@ -22,7 +22,7 @@ class QueslarBot(commands.Bot):
     self.notificationChannel = None #Initialized in setup_loop
     self.tagId = os.environ['TAG']
 
-    self.tiles = []
+    self.tiles = [Tile(t) for t in db.get("tiles", [])]
     self.mystery = db.get("mystery","???")
     
     self.exploration = Exploration(db.get("exploration_timer","2000-01-01T00:00:00.000Z"))
@@ -98,7 +98,7 @@ class QueslarBot(commands.Bot):
   async def setup_loop(self):
     await self.wait_until_ready()
     #Initialize channel
-    self.notificationChannel = self.get_channel(db["channelId"])
+    self.notificationChannel = self.get_channel(db.get("channelId"))
     if(not self.notificationChannel):
       print("Failed to find channel.")
 
@@ -165,7 +165,7 @@ class QueslarBot(commands.Bot):
     embed = discord.Embed(title="Kingdom Tiles", color=0x0080c0)
     for tile in self.tiles:
       embed.add_field(name=tile.get_coords(), value=str(tile), inline=True)
-    embed.set_footer(text="Last updated: {} UTC".format(db["last_updated"]))
+    embed.set_footer(text="Last updated: {} UTC".format(db.get("last_updated","Unknown")))
     return embed
 
 

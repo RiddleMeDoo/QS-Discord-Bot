@@ -60,3 +60,20 @@ class Market:
     minutes = (diff.seconds % 3600) // 60
     return minutes > 60
 
+
+  def price_to_str(self, price):
+    '''
+    Return a truncated str version of the price
+    '''
+    if price // 1000000000 > 0: #billion
+      trunc = str(price / 1000000000)
+      return trunc[:trunc.find(".")+3] + "b"
+    elif price // 1000000 > 0: #million
+      trunc = str(price / 1000000)
+      return trunc[:trunc.find(".")+3] + "m"
+    elif price // 1000 > 0: #thousand
+      trunc = str(price / 1000)
+      return trunc[:trunc.find(".")+3] + "k"
+    else:
+      trunc = str(price)
+      return trunc[:trunc.find(".")+3]

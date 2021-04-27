@@ -227,7 +227,7 @@ class QueslarBot(commands.Bot):
     currency = data["currency"]
     username = "{}({})".format(data["player"]["username"],currency["id"])
     level = data["skills"]["battling"]
-    goldInv = "{} ({})".format(currency["gold"], currency["bank_gold"])
+    goldInv = "{} ({})".format(currency["gold"]//1, currency["bank_gold"]//1)
     creditsInv = "{} ({})".format(currency["credits"],currency["bank_credits"])
     relicsInv = "{} ({})".format(currency["relics"], currency["bank_relics"])
 
@@ -359,37 +359,45 @@ class QueslarBot(commands.Bot):
       equipmentStats.append(piece["total_stats"])
 
     #Phew, finally putting the message together
+    toStr = self.market.price_to_str
     msg = "```Name: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
-    ---------------------------------------------------------------------\n\
-    Partner Costs: {} ({})\nPartner Boosts: {}\n\
-    Fighter Costs: {} ({})\nFighter Boosts: {}\nPet Costs: {} ({})\n\
-    Equipment Slots: {}\nPartner Relic Boosts: {}\n\
-    Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
-    Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
-    ---------------------------------------------------------------------\n\
-    Self Investment Total: {}\n\
-    ---------------------------------------------------------------------\n\
-    Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
-    Drop Enchants: {}% ({})\Stat Enchants: {}% ({})\n\
-    Res Enchants: {}% ({})\n\
-    ---------------------------------------------------------------------\n\
-    Left Hand Stats: {} ({})\nRight Hand Stats: {} ({})\n\
-    Helmet Stats: {} ({})\nArmor Stats: {} ({})\nGloves Stats: {} ({})\n\
-    Legging Stats: {} ({})\nBoots Stats: {} ({})```".format(
-      username, level, goldInv, creditsInv, relicsInv, 
-      partnerCost, len(partners), fighterCost, len(fighters),
-      petCost, len(data["pets"]), eqSlotInvestment,
-      relicPartnerInvestment, relicBattleInvestment,
-      relicPartnerInvestment+relicBattleInvestment,
+---------------------------------------------------------------------\n".format(
+      username, level, goldInv, creditsInv, relicsInv
+    )
+    
+    msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\
+Fighter Costs: {} ({})\nFighter Boosts: {}\nPet Costs: {} ({})\n\
+Equipment Slots: {}\nPartner Relic Boosts: {}\n\
+Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
+Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
+---------------------------------------------------------------------\n".format(
+      toStr(partnerCost), len(partners), partnerInvestment,
+      toStr(fighterCost), len(fighters), fighterInvestment, toStr(petCost), len(data["pets"]), 
+      eqSlotInvestment, relicPartnerInvestment, 
+      relicBattleInvestment, relicPartnerInvestment+relicBattleInvestment,
       houseInvestment, homesteadInvestment,
       homestead["fishing_level"], homestead["mine_level"],
-      homestead["logging_level"], homestead["farm_level"],
+      homestead["logging_level"], homestead["farm_level"]
+    )
+
+    msg += "Self Investment Total: {}\n\
+---------------------------------------------------------------------\n\
+Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
+Drop Enchants: {}% ({})\nStat Enchants: {}% ({})\n\
+Res Enchants: {}% ({})\n\
+---------------------------------------------------------------------\n".format(
       totalInvestment,
-      enchants["experience"][1],enchants["experience"][0],
-      enchants["gold"][1],enchants["gold"][0],
-      enchants["drop"][1],enchants["drop"][0],
-      enchants["stat"][1],enchants["stat"][0],
-      enchants["meat"][1]+enchants["iron"][1]+enchants["wood"][1]+enchants["stone"][1],enchants["meat"][0]+enchants["iron"][0]+enchants["wood"][0]+enchants["stone"][0],
+      round(enchants["experience"][1],2),round(enchants["experience"][0],2),
+      round(enchants["gold"][1],2),round(enchants["gold"][0],2),
+      round(enchants["drop"][1],2),round(enchants["drop"][0],2),
+      round(enchants["stat"][1],2),round(enchants["stat"][0],2),
+      round(enchants["meat"][1]+enchants["iron"][1]+enchants["wood"][1]+enchants["stone"][1],2),
+      round(enchants["meat"][0]+enchants["iron"][0]+enchants["wood"][0]+enchants["stone"][0],2)
+    )
+
+    msg += "Left Hand Stats: {} ({})\nRight Hand Stats: {} ({})\n\
+Helmet Stats: {} ({})\nArmor Stats: {} ({})\nGloves Stats: {} ({})\n\
+Legging Stats: {} ({})\nBoots Stats: {} ({})```".format( 
       equipmentStats[0], eqSlotLevels[0],
       equipmentStats[1], eqSlotLevels[1],
       equipmentStats[2], eqSlotLevels[2],

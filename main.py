@@ -3,7 +3,7 @@ from qsBot import QueslarBot
 import discord
 from discord.ext.commands import CommandNotFound, MissingRole, has_role, MissingRequiredArgument
 
-client = QueslarBot(command_prefix="!", help_command=None)
+client = QueslarBot(command_prefix=">", help_command=None)
 
 
 @client.event

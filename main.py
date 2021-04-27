@@ -93,6 +93,12 @@ async def set_channel(ctx):
   await ctx.send("Bound notifications to this channel.")
 
 
+@client.command(name="player")
+async def view_investments(ctx, key):
+  msg = client.get_player_investments(key)
+  ctx.send(msg)
+
+
 @client.group(invoke_without_command=True)
 async def timer(ctx):
   em = discord.Embed(title="Subcommands", description="", color=ctx.author.color)

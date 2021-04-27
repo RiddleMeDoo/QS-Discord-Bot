@@ -7,6 +7,7 @@ from datetime import datetime
 from replit import db
 from tile import Tile
 from exploration import Exploration
+from market import Market
 
 class QueslarBot(commands.Bot):
   '''
@@ -21,11 +22,13 @@ class QueslarBot(commands.Bot):
     self.notificationChannel = None #Initialized in setup_loop
     self.tagId = os.environ['TAG']
 
-    self.tiles = [Tile(t) for t in db.get("tiles", [])]
+    self.tiles = []
     self.mystery = db.get("mystery","???")
     
     self.exploration = Exploration(db.get("exploration_timer","2000-01-01T00:00:00.000Z"))
     self.scheduler = AsyncIOScheduler({'apscheduler.timezone': 'UTC'})
+
+    self.market = Market()
 
     self.update_info.start()
     self.scheduler.start()
@@ -63,10 +66,11 @@ class QueslarBot(commands.Bot):
     if(data):
       try:
         #Update only if anything changed
-        await self.update_tile_status(data["kingdom"]["tiles"])
         if "mapMisc" in data["kingdom"] and self.mystery != data["kingdom"]["mapMisc"]["mystery_tile"]:
           self.mystery = data["kingdom"]["mapMisc"]["mystery_tile"]
           db["mystery"] = self.mystery
+
+        await self.update_tile_status(data["kingdom"]["tiles"])
 
         dataExplo = Exploration(data["kingdom"]["activeExploration"]["exploration_timer"])
         if self.exploration != dataExplo:
@@ -99,12 +103,12 @@ class QueslarBot(commands.Bot):
       print("Failed to find channel.")
 
 
-  async def get_qs_data(self):
+  async def get_qs_data(self, key=os.environ['QS_KEY']):
     '''
     Returns player data from the API server
     '''
     async with aiohttp.ClientSession() as session:
-      async with session.get('https://queslar.com/api/player/full/'+os.environ['QS_KEY']) as res:
+      async with session.get('https://queslar.com/api/player/full/'+key) as res:
         if res.status == 200:
           return await res.json()
         else:
@@ -199,3 +203,201 @@ class QueslarBot(commands.Bot):
 
     return str(self.exploration)
   
+
+  async def get_player_investments(self, key):
+    if self.market.is_outdated() and not await self.market.update():
+      print("Market could not update.")
+      return
+    data = await self.get_qs_data(key)
+
+
+    #Costs for number of partners/pets 
+    buyPCost = {
+      0: 0,
+      1: 10000,
+      2: 110000,
+      3: 1110000,
+      4: 11110000,
+      5: 111110000,
+      6: 1111110000,
+      7: 11111110000
+    }
+
+    # Basic info + currencies
+    currency = data["currency"]
+    username = "{}({})".format(data["player"]["username"],currency["id"])
+    level = data["skills"]["battling"]
+    goldInv = "{} ({})".format(currency["gold"], currency["bank_gold"])
+    creditsInv = "{} ({})".format(currency["credits"],currency["bank_credits"])
+    relicsInv = "{} ({})".format(currency["relics"], currency["bank_relics"])
+
+    # Investment
+    ### Partners
+    partners = data["partners"]
+    partnerInvestment = 0
+    for partner in partners:
+      speed = partner["speed"]
+      intelligence = partner["intelligence"]
+      if speed > 0:
+        # Calculations are made with "sum of consecutive integers" formula
+        partnerInvestment += round(10000 * (speed * (speed + 1) / 2)) 
+      if intelligence > 0:
+        partnerInvestment += round(10000 * (intelligence * (intelligence + 1) / 2))
+
+    partnerCost = buyPCost[len(partners)]
+    petCost = buyPCost[len(data["pets"])] # PET
+
+    ### Fighters
+    fighters = data["fighters"]
+    fighter_stats = ["health", "damage", "hit", "dodge", "defense", "crit_damage"]
+    fighterInvestment = 0
+
+    for fighter in fighters:
+      for stat in fighter_stats:
+        if fighter[stat] > 0: 
+          fighterInvestment += round(10000 * (fighter[stat] * (fighter[stat] + 1) / 2))
+
+    fighterCost = buyPCost[len(fighters) - 1]
+
+    ### Equipment Slots
+    eqSlots = data["equipmentSlots"]
+    eqSlotLevels = [eqSlots["left_hand_level"], eqSlots["right_hand_level"], eqSlots["head_level"], eqSlots["body_level"], eqSlots["hands_level"], eqSlots["legs_level"], eqSlots["feet_level"]]
+    matPrice = (self.market.prices["meat"] + self.market.prices["iron"] + self.market.prices["wood"] + self.market.prices["stone"]) #Used later
+    baseCost = 250 * matPrice
+    eqSlotInvestment = 0
+    
+    for level in eqSlotLevels:
+      if level > 0:
+        # Uses geometric series closed formula
+        eqSlotInvestment += baseCost * ((1 - 1.1**level) / -0.1)
+  
+    ### Relics
+    boosts = data["boosts"]
+    relicPrice = self.market.prices["relics"]
+    battleBoostTypes = ["critChance", "critDamage", "multistrike", "healing", "defense"]
+    partnerTypes = ["hunting_boost","mining_boost","woodcutting_boost","stonecarving_boost"]
+    relicBattleInvestment = 0
+    relicPartnerInvestment = 0
+
+    for boost in battleBoostTypes:
+      if boosts[boost] > 0:
+        relicBattleInvestment += round(10 * (boosts[boost] * (boosts[boost] + 1) / 2) * relicPrice)
+
+    for boost in partnerTypes:
+      if boosts[boost] > 0:
+        relicPartnerInvestment += round(10 * (boosts[boost] * (boosts[boost] + 1) / 2) * relicPrice)
+    
+    ### House
+    house = data["house"]
+    houseUpgrades = ["chairs", "stove", "sink", "basket", "pitchfork", "shed", "fountain", "tools", "barrel"]
+    houseInvestment = 0
+    
+
+    for type in houseUpgrades:
+      if house[type] > 0:
+        # Couldn't find a closed formula
+        for i in range(house[type]):
+          upgradeMats = 1000 + (1000 * (i - 1)**1.25)
+          houseInvestment += upgradeMats * matPrice
+    
+
+    ### Homesteads (HS)
+    homestead = data["playerHomesteadData"]
+    hsLevels = {
+      "fishing_level":0,
+      "mine_level":0,
+      "logging_level":0,
+      "farm_level":0
+    }
+
+    for type in hsLevels:
+      level = homestead[type]
+      if level > 0:
+        hsLevels[type] += level * (level + 1) / 2
+      if level > 250:
+        hsLevels[type] += (level - 250) * (level - 249) / 2
+      if level > 500:
+        hsLevels[type] += (level - 500) * (level - 499) / 2
+      if level > 750:
+        hsLevels[type] += (level - 750) * (level - 749) / 2
+      if level > 1000:
+        hsLevels[type] += (level - 1000) * (level - 999) / 2
+      hsLevels[type] *= 1000
+    
+    homesteadInvestment = hsLevels["fishing_level"] * self.market.prices["meat"] + \
+      hsLevels["mine_level"] * self.market.prices["iron"] + \
+      hsLevels["logging_level"] * self.market.prices["wood"] + \
+      hsLevels["farm_level"] * self.market.prices["stone"]
+    
+
+    totalInvestment = partnerInvestment + partnerCost + petCost + \
+      fighterInvestment + fighterCost + eqSlotInvestment + \
+      relicBattleInvestment + relicPartnerInvestment + \
+      houseInvestment + homesteadInvestment
+
+
+    ### Enchants and Equipment
+    equipment = data["equipmentEquipped"]
+    enchants = {
+      "gold": [0,0],
+      "experience": [0,0],
+      "drop": [0,0],
+      "stat": [0,0],
+      "meat": [0,0],
+      "iron": [0,0],
+      "wood": [0,0],
+      "stone": [0,0]
+    }
+    equipmentStats = []
+
+    for piece in equipment:
+      if piece["enchant_type"] in enchants:
+        enchants[piece["enchant_type"]][1] = piece["enchant_value"]**0.425 / 2 + \
+                                             enchants[piece["enchant_type"]][1]
+        enchants[piece["enchant_type"]][0] += 1
+
+      equipmentStats.append(piece["total_stats"])
+
+    #Phew, finally putting the message together
+    msg = "```Name: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
+    ---------------------------------------------------------------------\n\
+    Partner Costs: {} ({})\nPartner Boosts: {}\n\
+    Fighter Costs: {} ({})\nFighter Boosts: {}\nPet Costs: {} ({})\n\
+    Equipment Slots: {}\nPartner Relic Boosts: {}\n\
+    Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
+    Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
+    ---------------------------------------------------------------------\n\
+    Self Investment Total: {}\n\
+    ---------------------------------------------------------------------\n\
+    Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
+    Drop Enchants: {}% ({})\Stat Enchants: {}% ({})\n\
+    Res Enchants: {}% ({})\n\
+    ---------------------------------------------------------------------\n\
+    Left Hand Stats: {} ({})\nRight Hand Stats: {} ({})\n\
+    Helmet Stats: {} ({})\nArmor Stats: {} ({})\nGloves Stats: {} ({})\n\
+    Legging Stats: {} ({})\nBoots Stats: {} ({})```".format(
+      username, level, goldInv, creditsInv, relicsInv, 
+      partnerCost, len(partners), fighterCost, len(fighters),
+      petCost, len(data["pets"]), eqSlotInvestment,
+      relicPartnerInvestment, relicBattleInvestment,
+      relicPartnerInvestment+relicBattleInvestment,
+      houseInvestment, homesteadInvestment,
+      homestead["fishing_level"], homestead["mine_level"],
+      homestead["logging_level"], homestead["farm_level"],
+      totalInvestment,
+      enchants["experience"][1],enchants["experience"][0],
+      enchants["gold"][1],enchants["gold"][0],
+      enchants["drop"][1],enchants["drop"][0],
+      enchants["stat"][1],enchants["stat"][0],
+      enchants["meat"][1]+enchants["iron"][1]+enchants["wood"][1]+enchants["stone"][1],enchants["meat"][0]+enchants["iron"][0]+enchants["wood"][0]+enchants["stone"][0],
+      equipmentStats[0], eqSlotLevels[0],
+      equipmentStats[1], eqSlotLevels[1],
+      equipmentStats[2], eqSlotLevels[2],
+      equipmentStats[3], eqSlotLevels[3],
+      equipmentStats[4], eqSlotLevels[4],
+      equipmentStats[5], eqSlotLevels[5],
+      equipmentStats[6], eqSlotLevels[6]
+    )
+    
+    return msg
+

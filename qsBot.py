@@ -205,8 +205,7 @@ class QueslarBot(commands.Bot):
   
 
   async def get_player_investments(self, key):
-    #if self.market.is_outdated() and not await self.market.update():
-    if not await self.market.update():
+    if self.market.is_outdated() and not await self.market.update():
       print("Market could not update.")
       return
     data = await self.get_qs_data(key)

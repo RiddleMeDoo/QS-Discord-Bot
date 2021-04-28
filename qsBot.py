@@ -226,6 +226,7 @@ class QueslarBot(commands.Bot):
 
     # Basic info + currencies
     currency = data["currency"]
+    village = data["village"]["overview"]["name"] if data["village"] else "Not in a village"
     username = "{}({})".format(data["player"]["username"],currency["id"])
     level = data["skills"]["battling"]
     goldInv = "{} ({})".format(toStr(currency["gold"]), toStr(currency["bank_gold"]))
@@ -360,9 +361,9 @@ class QueslarBot(commands.Bot):
       equipmentStats.append(piece["total_stats"])
 
     #Phew, finally putting the message together
-    msg = "```Name: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
+    msg = "```Village: {}\nName: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
 ---------------------------------------------------------------------\n".format(
-      username, level, goldInv, creditsInv, relicsInv
+      village, username, level, goldInv, creditsInv, relicsInv
     )
     
     msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\

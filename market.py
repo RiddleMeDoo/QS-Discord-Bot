@@ -5,8 +5,6 @@ from datetime import datetime
 
 class Market:
   def __init__(self):
-    if "prices" in db:
-      del db["prices"]
     self.prices = db.get("prices", { 
         "meat" : "-1.0", # Must be str to get around db type restrictions
         "iron" : "-1.0",

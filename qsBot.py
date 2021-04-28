@@ -207,14 +207,11 @@ class QueslarBot(commands.Bot):
   async def get_player_investments(self, key):
     if self.market.is_outdated() and not await self.market.update():
       print("Market could not update.")
-      return
+      return "Market could not update."
     data = await self.get_qs_data(key)
-    if not data:
-      return "Error: Could not get player information with the API key."
-    toStr = self.market.price_to_str
-
-    #Costs for number of partners/pets 
-    buyPCost = {
+    toStr = self.market.price_to_str #Because the function name is long
+    #Costs for number of partners/pets/fighters 
+    buyUnitsCost = {
       0: 0,
       1: 10000,
       2: 110000,
@@ -241,7 +238,7 @@ class QueslarBot(commands.Bot):
 
     # Basic stats
     stats = data["stats"]
-    msg += "Strength: {}\n Health: {}\nAgility: {}\nDexterity: {}\n\
+    msg += "Strength: {}\nHealth: {}\nAgility: {}\nDexterity: {}\n\
 ---------------------------------------------------------------------\n".format(
       stats["strength"], stats["health"], stats["agility"], stats["dexterity"]
     )
@@ -259,8 +256,8 @@ class QueslarBot(commands.Bot):
       if intelligence > 0:
         partnerInvestment += round(10000 * (intelligence * (intelligence + 1) / 2))
 
-    partnerCost = buyPCost[len(partners)]
-    petCost = buyPCost[len(data["pets"])] # PET
+    partnerCost = buyUnitsCost[len(partners)]
+    petCost = buyUnitsCost[len(data["pets"])] # PET
 
     ### Fighters
     fighters = data["fighters"]
@@ -272,7 +269,7 @@ class QueslarBot(commands.Bot):
         if fighter[stat] > 0: 
           fighterInvestment += round(10000 * (fighter[stat] * (fighter[stat] + 1) / 2))
 
-    fighterCost = buyPCost[len(fighters) - 1]
+    fighterCost = buyUnitsCost[len(fighters) - 1]
 
     ### Equipment Slots
     eqSlots = data["equipmentSlots"]
@@ -368,7 +365,7 @@ Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
 
     msg += "Self Investment Total: {}\n\
 ---------------------------------------------------------------------\n".format(
-      totalInvestment
+      toStr(totalInvestment)
     )
 
 
@@ -399,7 +396,6 @@ Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
 Drop Enchants: {}% ({})\nStat Enchants: {}% ({})\n\
 Res Enchants: {}% ({})\n\
 ---------------------------------------------------------------------\n".format(
-      toStr(totalInvestment),
       round(enchants["experience"][1],2),round(enchants["experience"][0],2),
       round(enchants["gold"][1],2),round(enchants["gold"][0],2),
       round(enchants["drop"][1],2),round(enchants["drop"][0],2),

@@ -130,3 +130,5 @@ dmypy.json
 
 # Replit
 .replit
+poetry.lock
+pyproject.toml

@@ -209,6 +209,8 @@ class QueslarBot(commands.Bot):
       print("Market could not update.")
       return
     data = await self.get_qs_data(key)
+    if not data:
+      return "Error: Could not get player information with the API key."
     toStr = self.market.price_to_str
 
     #Costs for number of partners/pets 

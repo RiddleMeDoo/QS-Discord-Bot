@@ -17,6 +17,7 @@ my_secret = os.environ['TOKEN']
 async def help(ctx):
   em = discord.Embed(title="Help", description="Use >help <command> for further information.", color=ctx.author.color)
   em.add_field(name="Ping",value=">ping",inline=False)
+  em.add_field(name="Get Player Investment Data", value=">player [APIKey]",inline=False)
   em.add_field(name="Bind",value=" >bind",inline=False)
   em.add_field(name="Update",value=">update",inline=False)
   em.add_field(name="Tiles",value=">tiles",inline=False)
@@ -28,6 +29,13 @@ async def help(ctx):
 async def help_ping(ctx):
   em = discord.Embed(title="Ping", description="The bot will send a message if it is active.", color=ctx.author.color)
   em.add_field(name="**Usage**",value=">ping")
+
+  await ctx.send(embed=em)
+
+@help.command(name="player")
+async def help_player(ctx):
+  em = discord.Embed(title="Get Player Investment Data", description="Displays investment info of the player from the given API key.", color=ctx.author.color)
+  em.add_field(name="**Usage**",value=">player [APIKey]")
 
   await ctx.send(embed=em)
 
@@ -94,9 +102,10 @@ async def set_channel(ctx):
 
 
 @client.command(name="player")
-async def view_investments(ctx, key):
+async def display_investments(ctx, key):
   msg = await client.get_player_investments(key)
   await ctx.send(msg)
+
 
 
 @client.group(invoke_without_command=True)
@@ -139,7 +148,7 @@ async def on_command_error(ctx, err):
     await ctx.send("Only leaders can use this command.")
     return
   elif isinstance(err, MissingRequiredArgument):
-    await ctx.send("Please add an api key to the command.")
+    await ctx.send("Please add the required argument to the command.")
     return
   raise err
 

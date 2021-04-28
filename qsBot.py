@@ -205,7 +205,8 @@ class QueslarBot(commands.Bot):
   
 
   async def get_player_investments(self, key):
-    if self.market.is_outdated() and not await self.market.update():
+    #if self.market.is_outdated() and not await self.market.update():
+    if not await self.market.update():
       print("Market could not update.")
       return
     data = await self.get_qs_data(key)
@@ -262,7 +263,7 @@ class QueslarBot(commands.Bot):
     ### Equipment Slots
     eqSlots = data["equipmentSlots"]
     eqSlotLevels = [eqSlots["left_hand_level"], eqSlots["right_hand_level"], eqSlots["head_level"], eqSlots["body_level"], eqSlots["hands_level"], eqSlots["legs_level"], eqSlots["feet_level"]]
-    matPrice = (self.market.prices["meat"] + self.market.prices["iron"] + self.market.prices["wood"] + self.market.prices["stone"]) #Used later
+    matPrice = (float(self.market.prices["meat"]) + float(self.market.prices["iron"]) + float(self.market.prices["wood"]) + float(self.market.prices["stone"])) #Used later
     baseCost = 250 * matPrice
     eqSlotInvestment = 0
     
@@ -273,7 +274,7 @@ class QueslarBot(commands.Bot):
   
     ### Relics
     boosts = data["boosts"]
-    relicPrice = self.market.prices["relics"]
+    relicPrice = float(self.market.prices["relics"])
     battleBoostTypes = ["critChance", "critDamage", "multistrike", "healing", "defense"]
     partnerTypes = ["hunting_boost","mining_boost","woodcutting_boost","stonecarving_boost"]
     relicBattleInvestment = 0
@@ -296,7 +297,7 @@ class QueslarBot(commands.Bot):
     for type in houseUpgrades:
       if house[type] > 0:
         # Couldn't find a closed formula
-        for i in range(house[type]):
+        for i in range(1, house[type] + 1):
           upgradeMats = 1000 + (1000 * (i - 1)**1.25)
           houseInvestment += upgradeMats * matPrice
     
@@ -324,10 +325,10 @@ class QueslarBot(commands.Bot):
         hsLevels[type] += (level - 1000) * (level - 999) / 2
       hsLevels[type] *= 1000
     
-    homesteadInvestment = hsLevels["fishing_level"] * self.market.prices["meat"] + \
-      hsLevels["mine_level"] * self.market.prices["iron"] + \
-      hsLevels["logging_level"] * self.market.prices["wood"] + \
-      hsLevels["farm_level"] * self.market.prices["stone"]
+    homesteadInvestment = hsLevels["fishing_level"] * float(self.market.prices["meat"]) + \
+      hsLevels["mine_level"] * float(self.market.prices["iron"]) + \
+      hsLevels["logging_level"] * float(self.market.prices["wood"]) + \
+      hsLevels["farm_level"] * float(self.market.prices["stone"])
     
 
     totalInvestment = partnerInvestment + partnerCost + petCost + \
@@ -371,10 +372,10 @@ Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
 Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
 ---------------------------------------------------------------------\n".format(
       toStr(partnerCost), len(partners), toStr(partnerInvestment),
-      toStr(fighterCost), len(fighters), fighterInvestment, toStr(petCost), len(data["pets"]), 
+      toStr(fighterCost), len(fighters), toStr(fighterInvestment), toStr(petCost), len(data["pets"]), 
       toStr(eqSlotInvestment), toStr(relicPartnerInvestment), 
       toStr(relicBattleInvestment), toStr(relicPartnerInvestment+relicBattleInvestment),
-      houseInvestment, toStr(homesteadInvestment),
+      toStr(houseInvestment), toStr(homesteadInvestment),
       homestead["fishing_level"], homestead["mine_level"],
       homestead["logging_level"], homestead["farm_level"]
     )
@@ -385,7 +386,7 @@ Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
 Drop Enchants: {}% ({})\nStat Enchants: {}% ({})\n\
 Res Enchants: {}% ({})\n\
 ---------------------------------------------------------------------\n".format(
-      totalInvestment,
+      toStr(totalInvestment),
       round(enchants["experience"][1],2),round(enchants["experience"][0],2),
       round(enchants["gold"][1],2),round(enchants["gold"][0],2),
       round(enchants["drop"][1],2),round(enchants["drop"][0],2),

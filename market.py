@@ -6,15 +6,14 @@ from datetime import datetime
 class Market:
   def __init__(self):
     if "prices" in db:
-      self.prices = db["prices"]
-    else:
-      self.prices = {
-        "meat" : -1,
-        "iron" : -1,
-        "wood" : -1,
-        "stone" : -1,
-        "relics" : -1
-      }
+      del db["prices"]
+    self.prices = db.get("prices", { 
+        "meat" : "-1.0", # Must be str to get around db type restrictions
+        "iron" : "-1.0",
+        "wood" : "-1.0",
+        "stone" : "-1.0",
+        "relics" : "-1.0"
+      }) 
 
 
   async def update(self):
@@ -30,7 +29,7 @@ class Market:
       newPrice = self.prices.get(currency, 0)
       #Only update if it's one of the 5 types in self.prices
       if item["market_type"] == "buy" and newPrice:
-        self.prices[currency] = item["price"]
+        self.prices[currency] = str(item["price"])
     
 
     db["prices"] = self.prices
@@ -76,5 +75,5 @@ class Market:
       trunc = str(price / 100000)
       return trunc[:trunc.find(".")+3] + "k"
     else:
-      trunc = str(price)/1
+      trunc = str(price/1)
       return trunc[:trunc.find(".")+3]

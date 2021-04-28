@@ -28,8 +28,9 @@ class Market:
     for item in newPrices:
       currency = item["currency_type"]
       newPrice = self.prices.get(currency, 0)
+      #Only update if it's one of the 5 types in self.prices
       if item["market_type"] == "buy" and newPrice:
-        self.prices[currency] = newPrice
+        self.prices[currency] = item["price"]
     
 
     db["prices"] = self.prices
@@ -56,8 +57,8 @@ class Market:
     Returns True if the most recent timestamp occured more 
     than 1 hour ago.
     '''
-    diff = datetime.strptime(db.get("market_last_updated", "2000-01-01T00:00:00.000Z"), "%Y-%m-%dT%H:%M:%S.000Z") - datetime.utcnow()
-    minutes = (diff.seconds % 3600) // 60
+    diff =  datetime.utcnow() - datetime.strptime(db.get("market_last_updated", "2000-01-01T00:00:00.000Z"), "%Y-%m-%dT%H:%M:%S.000Z")
+    minutes = diff.seconds / 60
     return minutes > 60
 
 
@@ -71,9 +72,9 @@ class Market:
     elif price // 1000000 > 0: #million
       trunc = str(price / 1000000)
       return trunc[:trunc.find(".")+3] + "m"
-    elif price // 1000 > 0: #thousand
-      trunc = str(price / 1000)
+    elif price // 100000 > 0: #hundred thousand
+      trunc = str(price / 100000)
       return trunc[:trunc.find(".")+3] + "k"
     else:
-      trunc = str(price)
+      trunc = str(price)/1
       return trunc[:trunc.find(".")+3]

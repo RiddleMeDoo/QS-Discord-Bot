@@ -209,7 +209,7 @@ class QueslarBot(commands.Bot):
       print("Market could not update.")
       return
     data = await self.get_qs_data(key)
-
+    toStr = self.market.price_to_str
 
     #Costs for number of partners/pets 
     buyPCost = {
@@ -227,9 +227,9 @@ class QueslarBot(commands.Bot):
     currency = data["currency"]
     username = "{}({})".format(data["player"]["username"],currency["id"])
     level = data["skills"]["battling"]
-    goldInv = "{} ({})".format(currency["gold"]//1, currency["bank_gold"]//1)
-    creditsInv = "{} ({})".format(currency["credits"],currency["bank_credits"])
-    relicsInv = "{} ({})".format(currency["relics"], currency["bank_relics"])
+    goldInv = "{} ({})".format(toStr(currency["gold"]), toStr(currency["bank_gold"]))
+    creditsInv = "{} ({})".format(toStr(currency["credits"]),toStr(currency["bank_credits"]))
+    relicsInv = "{} ({})".format(toStr(currency["relics"]), toStr(currency["bank_relics"]))
 
     # Investment
     ### Partners
@@ -359,7 +359,6 @@ class QueslarBot(commands.Bot):
       equipmentStats.append(piece["total_stats"])
 
     #Phew, finally putting the message together
-    toStr = self.market.price_to_str
     msg = "```Name: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
 ---------------------------------------------------------------------\n".format(
       username, level, goldInv, creditsInv, relicsInv
@@ -371,11 +370,11 @@ Equipment Slots: {}\nPartner Relic Boosts: {}\n\
 Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
 Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
 ---------------------------------------------------------------------\n".format(
-      toStr(partnerCost), len(partners), partnerInvestment,
+      toStr(partnerCost), len(partners), toStr(partnerInvestment),
       toStr(fighterCost), len(fighters), fighterInvestment, toStr(petCost), len(data["pets"]), 
-      eqSlotInvestment, relicPartnerInvestment, 
-      relicBattleInvestment, relicPartnerInvestment+relicBattleInvestment,
-      houseInvestment, homesteadInvestment,
+      toStr(eqSlotInvestment), toStr(relicPartnerInvestment), 
+      toStr(relicBattleInvestment), toStr(relicPartnerInvestment+relicBattleInvestment),
+      houseInvestment, toStr(homesteadInvestment),
       homestead["fishing_level"], homestead["mine_level"],
       homestead["logging_level"], homestead["farm_level"]
     )

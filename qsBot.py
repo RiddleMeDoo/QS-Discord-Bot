@@ -232,6 +232,18 @@ class QueslarBot(commands.Bot):
     creditsInv = "{} ({})".format(toStr(currency["credits"]),toStr(currency["bank_credits"]))
     relicsInv = "{} ({})".format(toStr(currency["relics"]), toStr(currency["bank_relics"]))
 
+    msg = "```Village: {}\nName: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
+---------------------------------------------------------------------\n".format(
+      village, username, level, goldInv, creditsInv, relicsInv
+    )
+
+    # Basic stats
+    stats = data["stats"]
+    msg += "Strength: {}\n Health: {}\nAgility: {}\nDexterity: {}\n\
+---------------------------------------------------------------------\n".format(
+      stats["strength"], stats["health"], stats["agility"], stats["dexterity"]
+    )
+
     # Investment
     ### Partners
     partners = data["partners"]
@@ -329,12 +341,33 @@ class QueslarBot(commands.Bot):
       hsLevels["mine_level"] * float(self.market.prices["iron"]) + \
       hsLevels["logging_level"] * float(self.market.prices["wood"]) + \
       hsLevels["farm_level"] * float(self.market.prices["stone"])
+
+
+    msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\
+Fighter Costs: {} ({})\nFighter Boosts: {}\nPet Costs: {} ({})\n\
+Equipment Slots: {}\nPartner Relic Boosts: {}\n\
+Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
+Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
+---------------------------------------------------------------------\n".format(
+      toStr(partnerCost), len(partners), toStr(partnerInvestment),
+      toStr(fighterCost), len(fighters), toStr(fighterInvestment), toStr(petCost), len(data["pets"]), 
+      toStr(eqSlotInvestment), toStr(relicPartnerInvestment), 
+      toStr(relicBattleInvestment), toStr(relicPartnerInvestment+relicBattleInvestment),
+      toStr(houseInvestment), toStr(homesteadInvestment),
+      homestead["fishing_level"], homestead["mine_level"],
+      homestead["logging_level"], homestead["farm_level"]
+    )
     
 
     totalInvestment = partnerInvestment + partnerCost + petCost + \
       fighterInvestment + fighterCost + eqSlotInvestment + \
       relicBattleInvestment + relicPartnerInvestment + \
       houseInvestment + homesteadInvestment
+
+    msg += "Self Investment Total: {}\n\
+---------------------------------------------------------------------\n".format(
+      totalInvestment
+    )
 
 
     ### Enchants and Equipment
@@ -358,31 +391,9 @@ class QueslarBot(commands.Bot):
         enchants[piece["enchant_type"]][0] += 1
 
       equipmentStats.append(piece["total_stats"])
-
-    #Phew, finally putting the message together
-    msg = "```Village: {}\nName: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
----------------------------------------------------------------------\n".format(
-      village, username, level, goldInv, creditsInv, relicsInv
-    )
     
-    msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\
-Fighter Costs: {} ({})\nFighter Boosts: {}\nPet Costs: {} ({})\n\
-Equipment Slots: {}\nPartner Relic Boosts: {}\n\
-Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
-Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
----------------------------------------------------------------------\n".format(
-      toStr(partnerCost), len(partners), toStr(partnerInvestment),
-      toStr(fighterCost), len(fighters), toStr(fighterInvestment), toStr(petCost), len(data["pets"]), 
-      toStr(eqSlotInvestment), toStr(relicPartnerInvestment), 
-      toStr(relicBattleInvestment), toStr(relicPartnerInvestment+relicBattleInvestment),
-      toStr(houseInvestment), toStr(homesteadInvestment),
-      homestead["fishing_level"], homestead["mine_level"],
-      homestead["logging_level"], homestead["farm_level"]
-    )
 
-    msg += "Self Investment Total: {}\n\
----------------------------------------------------------------------\n\
-Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
+    msg += "Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
 Drop Enchants: {}% ({})\nStat Enchants: {}% ({})\n\
 Res Enchants: {}% ({})\n\
 ---------------------------------------------------------------------\n".format(

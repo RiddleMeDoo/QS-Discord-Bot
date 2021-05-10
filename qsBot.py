@@ -257,7 +257,12 @@ class QueslarBot(commands.Bot):
         partnerInvestment += round(10000 * (intelligence * (intelligence + 1) / 2))
 
     partnerCost = buyUnitsCost[len(partners)]
-    petCost = buyUnitsCost[len(data["pets"])] # PET
+
+    ### Pets
+    petCost = buyUnitsCost[len(data["pets"])]
+    petInfo = data["playerPetsData"]
+    petInvestment = (petInfo["farm_strength"] + petInfo["farm_health"] + \
+      petInfo["farm_agility"] + petInfo["farm_dexterity"]) * 50000
 
     ### Fighters
     fighters = data["fighters"]
@@ -343,13 +348,15 @@ class QueslarBot(commands.Bot):
 
 
     msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\
-Fighter Costs: {} ({})\nFighter Boosts: {}\nPet Costs: {} ({})\n\
+Fighter Costs: {} ({})\nFighter Boosts: {}\n\
+Pet Costs: {} ({})\nPet Boosts: {}\n\
 Equipment Slots: {}\nPartner Relic Boosts: {}\n\
 Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
 Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
 ---------------------------------------------------------------------\n".format(
       toStr(partnerCost), len(partners), toStr(partnerInvestment),
-      toStr(fighterCost), len(fighters), toStr(fighterInvestment), toStr(petCost), len(data["pets"]), 
+      toStr(fighterCost), len(fighters), toStr(fighterInvestment), 
+      toStr(petCost), len(data["pets"]), toStr(petInvestment), 
       toStr(eqSlotInvestment), toStr(relicPartnerInvestment), 
       toStr(relicBattleInvestment), toStr(relicPartnerInvestment+relicBattleInvestment),
       toStr(houseInvestment), toStr(homesteadInvestment),

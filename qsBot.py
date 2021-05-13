@@ -261,8 +261,10 @@ class QueslarBot(commands.Bot):
     ### Pets
     petCost = buyUnitsCost[len(data["pets"])]
     petInfo = data["playerPetsData"]
-    petInvestment = (petInfo["farm_strength"] + petInfo["farm_health"] + \
-      petInfo["farm_agility"] + petInfo["farm_dexterity"]) * 50000
+    petInvestment = (petInfo["farm_strength"]*(petInfo["farm_strength"] + 1) / 2 + \
+      petInfo["farm_health"] * (petInfo["farm_health"] + 1) / 2 + \
+      petInfo["farm_agility"] * (petInfo["farm_agility"] + 1) / 2 + \
+      petInfo["farm_dexterity"] * (petInfo["farm_dexterity"] + 1) / 2) * 50000
 
     ### Fighters
     fighters = data["fighters"]

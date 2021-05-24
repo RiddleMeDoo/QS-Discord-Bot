@@ -414,14 +414,14 @@ Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
         enchants[piece["enchant_type"]][0] += 1
 
       # Adding tier bonus to stats
-      totalStats = piece["strength"] * eqTiers[piece["strength_tier"]] + \
+      totalStats = round(piece["strength"] * eqTiers[piece["strength_tier"]] + \
         piece["health"] * eqTiers[piece["health_tier"]] + \
         piece["agility"] * eqTiers[piece["agility_tier"]] + \
-        piece["dexterity"] * eqTiers[piece["dexterity_tier"]]
+        piece["dexterity"] * eqTiers[piece["dexterity_tier"]])
       equipmentStats.append(totalStats)
 
-      eqDamage += piece["damage"] * eqTiers[piece["damage_tier"]]
-      eqDefense += piece["defense"] * eqTiers[piece["defense_tier"]]
+      eqDamage += round(piece["damage"] * eqTiers[piece["damage_tier"]])
+      eqDefense += round(piece["defense"] * eqTiers[piece["defense_tier"]])
     
 
     msg += "Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\

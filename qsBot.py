@@ -391,6 +391,21 @@ Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
       "stone": [0,0]
     }
     equipmentStats = []
+    eqDamage = 0
+    eqDefense = 0
+    eqTiers = {
+      0: 1,
+      1: 1.15, 
+      2: 1.25,
+      3: 1.5,
+      4: 1.65,
+      5: 1.9,
+      6: 2.1,
+      7: 2.3,
+      8: 2.5,
+      9: 3,
+      10: 4
+    }
 
     for piece in equipment:
       if piece["enchant_type"] in enchants:
@@ -398,7 +413,15 @@ Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
                                              enchants[piece["enchant_type"]][1]
         enchants[piece["enchant_type"]][0] += 1
 
-      equipmentStats.append(piece["total_stats"])
+      # Adding tier bonus to stats
+      totalStats = piece["strength"] * eqTiers[piece["strength_tier"]] + \
+        piece["health"] * eqTiers[piece["health_tier"]] + \
+        piece["agility"] * eqTiers[piece["agility_tier"]] + \
+        piece["dexterity"] * eqTiers[piece["dexterity_tier"]]
+      equipmentStats.append(totalStats)
+
+      eqDamage += piece["damage"] * eqTiers[piece["damage_tier"]]
+      eqDefense += piece["defense"] * eqTiers[piece["defense_tier"]]
     
 
     msg += "Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
@@ -413,16 +436,18 @@ Res Enchants: {}% ({})\n\
       round(enchants["meat"][0]+enchants["iron"][0]+enchants["wood"][0]+enchants["stone"][0],2)
     )
 
-    msg += "Left Hand Stats: {} ({})\nRight Hand Stats: {} ({})\n\
+    msg += "Damage: {}    Defense: {}\n\
+Left Hand Stats: {} ({})\nRight Hand Stats: {} ({})\n\
 Helmet Stats: {} ({})\nArmor Stats: {} ({})\nGloves Stats: {} ({})\n\
 Legging Stats: {} ({})\nBoots Stats: {} ({})```".format( 
-      equipmentStats[0], eqSlotLevels[0],
-      equipmentStats[1], eqSlotLevels[1],
-      equipmentStats[2], eqSlotLevels[2],
-      equipmentStats[3], eqSlotLevels[3],
-      equipmentStats[4], eqSlotLevels[4],
-      equipmentStats[5], eqSlotLevels[5],
-      equipmentStats[6], eqSlotLevels[6]
+      eqDamage, eqDefense,
+      equipmentStats[0], eqSlotLevels[0] + equipment[0]["slot_tier"],
+      equipmentStats[1], eqSlotLevels[1] + equipment[1]["slot_tier"],
+      equipmentStats[2], eqSlotLevels[2] + equipment[2]["slot_tier"],
+      equipmentStats[3], eqSlotLevels[3] + equipment[3]["slot_tier"],
+      equipmentStats[4], eqSlotLevels[4] + equipment[4]["slot_tier"],
+      equipmentStats[5], eqSlotLevels[5] + equipment[5]["slot_tier"],
+      equipmentStats[6], eqSlotLevels[6] + equipment[6]["slot_tier"]
     )
     
     return msg

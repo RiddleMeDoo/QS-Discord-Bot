@@ -299,10 +299,10 @@ class QueslarBot(commands.Bot):
     relicPartnerInvestment = 0
 
     for boost in battleBoostTypes:
-      relicBattleInvestment += round(getRelicInvestment(boosts[boost]) * relicPrice)
+      relicBattleInvestment += round(self.getRelicInvestment(boosts[boost]) * relicPrice)
 
     for boost in partnerTypes:
-      relicPartnerInvestment += round(getRelicInvestment(boosts[boost]) * relicPrice)
+      relicPartnerInvestment += round(self.getRelicInvestment(boosts[boost]) * relicPrice)
     
     ### House
     house = data["house"]
@@ -450,7 +450,7 @@ Legging Stats: {} ({})\nBoots Stats: {} ({})```".format(
     
     return msg
 
-  def getRelicInvestment(level):
+  def getRelicInvestment(self, level):
     '''
     Returns the amount of relics invested according to the level
     '''

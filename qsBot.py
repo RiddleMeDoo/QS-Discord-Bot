@@ -299,12 +299,10 @@ class QueslarBot(commands.Bot):
     relicPartnerInvestment = 0
 
     for boost in battleBoostTypes:
-      if boosts[boost] > 0:
-        relicBattleInvestment += round(10 * (boosts[boost] * (boosts[boost] + 1) / 2) * relicPrice)
+      relicBattleInvestment += round(getRelicInvestment(boosts[boost]) * relicPrice)
 
     for boost in partnerTypes:
-      if boosts[boost] > 0:
-        relicPartnerInvestment += round(10 * (boosts[boost] * (boosts[boost] + 1) / 2) * relicPrice)
+      relicPartnerInvestment += round(getRelicInvestment(boosts[boost]) * relicPrice)
     
     ### House
     house = data["house"]
@@ -452,3 +450,37 @@ Legging Stats: {} ({})\nBoots Stats: {} ({})```".format(
     
     return msg
 
+  def getRelicInvestment(level):
+    '''
+    Returns the amount of relics invested according to the level
+    '''
+    if level <= 0:
+      return 0
+
+    if level <= 5000:
+      return 10 * (level * (level + 1) / 2)
+    elif level <= 10000:
+      investment = 125025000 #Investment at level 5000
+      increment = 30
+      initCost = 50000
+      
+      for i in range(5, level//1000 + 1):
+        base = 1000 if level >= (i+1) * 1000 else level % (i * 1000)
+        investment += increment * (base * (base + 1) / 2) + (initCost * base)
+        initCost += increment * 1000
+        increment += 20 #increases every 1k levels
+        
+    else: #level > 10k
+      investment = 1050200000 #Investment at level 10,000
+      increment = 130
+      initCost = 400000
+      
+      for i in range(10, level // 1000 + 1):
+        base = 1000 if level >= (i+1) * 1000 else level % (i * 1000)
+        investment += increment * (base * (base + 1) / 2) + (initCost * base)
+        initCost += increment * 1000
+        #Past 10k, increment also starts to add in consecutive sums (n * (n+1) / 2)
+        increment = (i - 7) * (i - 6) / 2 * 10 + 100
+        
+
+    return investment

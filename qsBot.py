@@ -240,25 +240,26 @@ class QueslarBot(commands.Bot):
     for partner in partners:
       partnerInvestment += calc.getPartnerInvestment(partner["speed"],partner["intelligence"])
 
-    partnerCost = calc.getUnitInvestment[len(partners)]
+    partnerCost = calc.getUnitInvestment(len(partners))
 
     ### Pets
-    petCost = calc.getUnitInvestment[len(data["pets"])]
+    petCost = calc.getUnitInvestment(len(data["pets"]))
     petInvestment = calc.getPetInvestment(data["playerPetsData"])
 
     ### Fighters
     fighters = data["fighters"]
     fighterInvestment = 0
-    fighterCost = calc.getUnitInvestment[len(fighters) - 1]
+    fighterCost = calc.getUnitInvestment(len(fighters) - 1)
 
     for fighter in fighters:
       fighterInvestment += calc.getFighterInvestment(fighter)
 
     ### Equipment Slots
     eqSlots = data["equipmentSlots"]
-    matPrice = (float(self.market.prices["meat"]) + float(self.market.prices["iron"]) +\ 
+    eqSlotLevels = [eqSlots["left_hand_level"], eqSlots["right_hand_level"], eqSlots["head_level"], eqSlots["body_level"], eqSlots["hands_level"], eqSlots["legs_level"], eqSlots["feet_level"]]
+    matPrice = (float(self.market.prices["meat"]) + float(self.market.prices["iron"]) + \
         float(self.market.prices["wood"]) + float(self.market.prices["stone"])) #Used later
-    eqSlotInvestment = calc.getEqSlotInvestment * matPrice
+    eqSlotInvestment = calc.getEqSlotInvestment(eqSlotLevels) * matPrice
    
     ### Relics
     boosts = data["boosts"]
@@ -385,9 +386,9 @@ Res Enchants: {}% ({})\n\
     )
 
     msg += "Damage: {}    Defense: {}\n\
-Left Hand Stats: {} ({})\nRight Hand Stats: {} ({} + {})\n\
-Helmet Stats: {} ({} + {})\nArmor Stats: {} ({} + {})\nGloves Stats: {} ({} + {})\n\
-Legging Stats: {} ({} + {})\nBoots Stats: {} ({} + {})```".format( 
+Left Hand Stats: {} ({}+{})\nRight Hand Stats: {} ({}+{})\n\
+Helmet Stats: {} ({}+{})\nArmor Stats: {} ({}+{})\nGloves Stats: {} ({}+{})\n\
+Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```".format( 
       eqDamage, eqDefense,
       equipmentStats[0], eqSlotLevels[0], equipment[0]["slot_tier"],
       equipmentStats[1], eqSlotLevels[1], equipment[1]["slot_tier"],

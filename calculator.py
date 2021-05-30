@@ -3,7 +3,7 @@ def getUnitInvestment(num):
   Returns the total amount of gold invested into buying num units.
   Units can be pets, partners, or fighters.
   '''
-  return "1" * num + "0000"
+  return int("1" * num + "0000")
 
 def getRelicInvestment(level):
   '''
@@ -114,15 +114,12 @@ def getFighterInvestment(fighter):
   return investment
 
 
-def getEqSlotInvestment(eqSlots):
+def getEqSlotInvestment(eqSlotLevels):
   '''
   Return the amount of res used as investment, given a list of eqSlots.
   Note that this only calculates the investment of a single res type.
   For a complete total, multiply by 4.
   '''
-  eqSlotLevels = [eqSlots["left_hand_level"], eqSlots["right_hand_level"], 
-      eqSlots["head_level"], eqSlots["body_level"], eqSlots["hands_level"], 
-      eqSlots["legs_level"], eqSlots["feet_level"]]
   investment = 0
 
   for level in eqSlotLevels:

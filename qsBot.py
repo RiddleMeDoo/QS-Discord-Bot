@@ -435,17 +435,17 @@ Res Enchants: {}% ({})\n\
     )
 
     msg += "Damage: {}    Defense: {}\n\
-Left Hand Stats: {} ({})\nRight Hand Stats: {} ({})\n\
-Helmet Stats: {} ({})\nArmor Stats: {} ({})\nGloves Stats: {} ({})\n\
-Legging Stats: {} ({})\nBoots Stats: {} ({})```".format( 
+Left Hand Stats: {} ({})\nRight Hand Stats: {} ({} + {})\n\
+Helmet Stats: {} ({} + {})\nArmor Stats: {} ({} + {})\nGloves Stats: {} ({} + {})\n\
+Legging Stats: {} ({} + {})\nBoots Stats: {} ({} + {})```".format( 
       eqDamage, eqDefense,
-      equipmentStats[0], eqSlotLevels[0] + equipment[0]["slot_tier"],
-      equipmentStats[1], eqSlotLevels[1] + equipment[1]["slot_tier"],
-      equipmentStats[2], eqSlotLevels[2] + equipment[2]["slot_tier"],
-      equipmentStats[3], eqSlotLevels[3] + equipment[3]["slot_tier"],
-      equipmentStats[4], eqSlotLevels[4] + equipment[4]["slot_tier"],
-      equipmentStats[5], eqSlotLevels[5] + equipment[5]["slot_tier"],
-      equipmentStats[6], eqSlotLevels[6] + equipment[6]["slot_tier"]
+      equipmentStats[0], eqSlotLevels[0], equipment[0]["slot_tier"],
+      equipmentStats[1], eqSlotLevels[1], equipment[1]["slot_tier"],
+      equipmentStats[2], eqSlotLevels[2], equipment[2]["slot_tier"],
+      equipmentStats[3], eqSlotLevels[3], equipment[3]["slot_tier"],
+      equipmentStats[4], eqSlotLevels[4], equipment[4]["slot_tier"],
+      equipmentStats[5], eqSlotLevels[5], equipment[5]["slot_tier"],
+      equipmentStats[6], eqSlotLevels[6], equipment[6]["slot_tier"]
     )
     
     return msg

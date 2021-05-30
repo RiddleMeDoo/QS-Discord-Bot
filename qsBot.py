@@ -8,6 +8,7 @@ from replit import db
 from tile import Tile
 from exploration import Exploration
 from market import Market
+import calculator as calc
 
 class QueslarBot(commands.Bot):
   '''
@@ -210,17 +211,6 @@ class QueslarBot(commands.Bot):
       return "Market could not update."
     data = await self.get_qs_data(key)
     toStr = self.market.price_to_str #Because the function name is long
-    #Costs for number of partners/pets/fighters 
-    buyUnitsCost = {
-      0: 0,
-      1: 10000,
-      2: 110000,
-      3: 1110000,
-      4: 11110000,
-      5: 111110000,
-      6: 1111110000,
-      7: 11111110000
-    }
 
     # Basic info + currencies
     currency = data["currency"]
@@ -248,48 +238,28 @@ class QueslarBot(commands.Bot):
     partners = data["partners"]
     partnerInvestment = 0
     for partner in partners:
-      speed = partner["speed"]
-      intelligence = partner["intelligence"]
-      if speed > 0:
-        # Calculations are made with "sum of consecutive integers" formula
-        partnerInvestment += round(10000 * (speed * (speed + 1) / 2)) 
-      if intelligence > 0:
-        partnerInvestment += round(10000 * (intelligence * (intelligence + 1) / 2))
+      partnerInvestment += calc.getPartnerInvestment(partner["speed"],partner["intelligence"])
 
-    partnerCost = buyUnitsCost[len(partners)]
+    partnerCost = calc.getUnitInvestment[len(partners)]
 
     ### Pets
-    petCost = buyUnitsCost[len(data["pets"])]
-    petInfo = data["playerPetsData"]
-    petInvestment = (petInfo["farm_strength"]*(petInfo["farm_strength"] + 1) / 2 + \
-      petInfo["farm_health"] * (petInfo["farm_health"] + 1) / 2 + \
-      petInfo["farm_agility"] * (petInfo["farm_agility"] + 1) / 2 + \
-      petInfo["farm_dexterity"] * (petInfo["farm_dexterity"] + 1) / 2) * 50000
+    petCost = calc.getUnitInvestment[len(data["pets"])]
+    petInvestment = calc.getPetInvestment(data["playerPetsData"])
 
     ### Fighters
     fighters = data["fighters"]
-    fighter_stats = ["health", "damage", "hit", "dodge", "defense", "crit_damage"]
     fighterInvestment = 0
+    fighterCost = calc.getUnitInvestment[len(fighters) - 1]
 
     for fighter in fighters:
-      for stat in fighter_stats:
-        if fighter[stat] > 0: 
-          fighterInvestment += round(10000 * (fighter[stat] * (fighter[stat] + 1) / 2))
-
-    fighterCost = buyUnitsCost[len(fighters) - 1]
+      fighterInvestment += calc.getFighterInvestment(fighter)
 
     ### Equipment Slots
     eqSlots = data["equipmentSlots"]
-    eqSlotLevels = [eqSlots["left_hand_level"], eqSlots["right_hand_level"], eqSlots["head_level"], eqSlots["body_level"], eqSlots["hands_level"], eqSlots["legs_level"], eqSlots["feet_level"]]
-    matPrice = (float(self.market.prices["meat"]) + float(self.market.prices["iron"]) + float(self.market.prices["wood"]) + float(self.market.prices["stone"])) #Used later
-    baseCost = 250 * matPrice
-    eqSlotInvestment = 0
-    
-    for level in eqSlotLevels:
-      if level > 0:
-        # Uses geometric series closed formula
-        eqSlotInvestment += baseCost * ((1 - 1.1**level) / -0.1)
-  
+    matPrice = (float(self.market.prices["meat"]) + float(self.market.prices["iron"]) +\ 
+        float(self.market.prices["wood"]) + float(self.market.prices["stone"])) #Used later
+    eqSlotInvestment = calc.getEqSlotInvestment * matPrice
+   
     ### Relics
     boosts = data["boosts"]
     relicPrice = float(self.market.prices["relics"])
@@ -299,52 +269,32 @@ class QueslarBot(commands.Bot):
     relicPartnerInvestment = 0
 
     for boost in battleBoostTypes:
-      relicBattleInvestment += round(self.getRelicInvestment(boosts[boost]) * relicPrice)
+      relicBattleInvestment += round(calc.getRelicInvestment(boosts[boost]) * relicPrice)
 
     for boost in partnerTypes:
-      relicPartnerInvestment += round(self.getRelicInvestment(boosts[boost]) * relicPrice)
+      relicPartnerInvestment += round(calc.getRelicInvestment(boosts[boost]) * relicPrice)
     
     ### House
     house = data["house"]
     houseUpgrades = ["chairs", "stove", "sink", "basket", "pitchfork", "shed", "fountain", "tools", "barrel"]
     houseInvestment = 0
-    
 
     for type in houseUpgrades:
-      if house[type] > 0:
-        # Couldn't find a closed formula
-        for i in range(1, house[type] + 1):
-          upgradeMats = 1000 + (1000 * (i - 1)**1.25)
-          houseInvestment += upgradeMats * matPrice
-    
+      houseInvestment += calc.getHouseInvestment(house[type]) * matPrice
 
     ### Homesteads (HS)
     homestead = data["playerHomesteadData"]
     hsLevels = {
-      "fishing_level":0,
-      "mine_level":0,
-      "logging_level":0,
-      "farm_level":0
+      "fishing_level": "meat",
+      "mine_level": "iron",
+      "logging_level": "wood",
+      "farm_level": "stone"
     }
+    homesteadInvestment = 0
 
     for type in hsLevels:
-      level = homestead[type]
-      if level > 0:
-        hsLevels[type] += level * (level + 1) / 2
-      if level > 250:
-        hsLevels[type] += (level - 250) * (level - 249) / 2
-      if level > 500:
-        hsLevels[type] += (level - 500) * (level - 499) / 2
-      if level > 750:
-        hsLevels[type] += (level - 750) * (level - 749) / 2
-      if level > 1000:
-        hsLevels[type] += (level - 1000) * (level - 999) / 2
-      hsLevels[type] *= 1000
-    
-    homesteadInvestment = hsLevels["fishing_level"] * float(self.market.prices["meat"]) + \
-      hsLevels["mine_level"] * float(self.market.prices["iron"]) + \
-      hsLevels["logging_level"] * float(self.market.prices["wood"]) + \
-      hsLevels["farm_level"] * float(self.market.prices["stone"])
+      homesteadInvestment += calc.getHomesteadInvestment(homestead[type]) * \
+        float(self.market.prices[hsLevels[type]])
 
 
     msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\
@@ -449,38 +399,3 @@ Legging Stats: {} ({} + {})\nBoots Stats: {} ({} + {})```".format(
     )
     
     return msg
-
-  def getRelicInvestment(self, level):
-    '''
-    Returns the amount of relics invested according to the level
-    '''
-    if level <= 0:
-      return 0
-
-    if level <= 5000:
-      return 10 * (level * (level + 1) / 2)
-    elif level <= 10000:
-      investment = 125025000 #Investment at level 5000
-      increment = 30
-      initCost = 50000
-      
-      for i in range(5, level//1000 + 1):
-        base = 1000 if level >= (i+1) * 1000 else level % (i * 1000)
-        investment += increment * (base * (base + 1) / 2) + (initCost * base)
-        initCost += increment * 1000
-        increment += 20 #increases every 1k levels
-        
-    else: #level > 10k
-      investment = 1050200000 #Investment at level 10,000
-      increment = 130
-      initCost = 400000
-      
-      for i in range(10, level // 1000 + 1):
-        base = 1000 if level >= (i+1) * 1000 else level % (i * 1000)
-        investment += increment * (base * (base + 1) / 2) + (initCost * base)
-        initCost += increment * 1000
-        #Past 10k, increment also starts to add in consecutive sums (n * (n+1) / 2)
-        increment = (i - 7) * (i - 6) / 2 * 10 + 100
-        
-
-    return investment

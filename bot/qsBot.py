@@ -1,6 +1,7 @@
 from discord.ext import tasks, commands
 import discord
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from dotenv import load_dotenv
 import os
 import aiohttp
 from datetime import datetime
@@ -9,6 +10,8 @@ from tile import Tile
 from exploration import Exploration
 from market import Market
 import calculator as calc
+
+load_dotenv()
 
 class QueslarBot(commands.Bot):
   '''
@@ -110,7 +113,7 @@ class QueslarBot(commands.Bot):
   async def setup_loop(self):
     await self.wait_until_ready()
     #Initialize channel
-    self.notificationChannel = self.get_channel(self.db.get("channelId"))
+    self.notificationChannel = self.get_channel(int(self.db.get("channelId")))
     if(not self.notificationChannel):
       print("Failed to find channel.")
 

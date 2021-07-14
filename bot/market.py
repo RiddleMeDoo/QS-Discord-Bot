@@ -1,10 +1,12 @@
-from replit import db
+import json
 import aiohttp
 import os
 from datetime import datetime
 
 class Market:
   def __init__(self):
+    with open("db.txt","r") as f: #Not the best way of accessing data
+      db = json.load(f)
     self.prices = db.get("prices", { 
         "meat" : "-1.0", # Must be str to get around db type restrictions
         "iron" : "-1.0",

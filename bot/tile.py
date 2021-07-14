@@ -1,4 +1,4 @@
-from replit import db
+import json
 
 class Tile:
   def __init__(self,  tile):
@@ -19,6 +19,8 @@ class Tile:
   def parse_tile(self, tile):
     if tile["type"] == "Minor" or tile["name"] == "Wild":
       if tile["resource_one_type"] == "mystery":
+        with open("db.txt","r") as f: #Not the best way of accessing data
+          db = json.load(f)
         tileType = ["mystery({})".format(db.get("mystery"), "???")]
       else:
         tileType = [tile["resource_one_type"]]

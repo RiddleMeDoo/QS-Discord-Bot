@@ -4,7 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
 import aiohttp
 from datetime import datetime
-from replit import db
+import json
 from tile import Tile
 from exploration import Exploration
 from market import Market
@@ -17,16 +17,23 @@ class QueslarBot(commands.Bot):
   '''
   def __init__(self,  *args, **kwargs):
     super().__init__(*args, **kwargs)
-    if "channelId" not in db:
-      db["channelId"] = os.environ['NOTIFY_CHANNEL']
+    #I can't believe I'm using a txt file for a database...
+    # Temporary fix, I swear!
+    self.db = {}
+    with open("db.txt", "r") as f:
+      self.db = json.load(f)
+
+    if "channelId" not in self.db:
+      self.db["channelId"] = os.environ['NOTIFY_CHANNEL']
+
     
     self.notificationChannel = None #Initialized in setup_loop
     self.tagId = os.environ['TAG']
 
-    self.tiles = [Tile(t) for t in db.get("tiles", [])]
-    self.mystery = db.get("mystery","???")
+    self.tiles = [Tile(t) for t in self.db.get("tiles", [])]
+    self.mystery = self.db.get("mystery","???")
     
-    self.exploration = Exploration(db.get("exploration_timer","2000-01-01T00:00:00.000Z"))
+    self.exploration = Exploration(self.db.get("exploration_timer","2000-01-01T00:00:00.000Z"))
     self.scheduler = AsyncIOScheduler({'apscheduler.timezone': 'UTC'})
 
     self.market = Market()
@@ -69,16 +76,16 @@ class QueslarBot(commands.Bot):
         #Update only if anything changed
         if "mapMisc" in data["kingdom"] and self.mystery != data["kingdom"]["mapMisc"]["mystery_tile"]:
           self.mystery = data["kingdom"]["mapMisc"]["mystery_tile"]
-          db["mystery"] = self.mystery
+          self.db["mystery"] = self.mystery
 
         await self.update_tile_status(data["kingdom"]["tiles"])
 
         dataExplo = Exploration(data["kingdom"]["activeExploration"]["exploration_timer"])
         if self.exploration != dataExplo:
-          db["exploration_timer"] = data["kingdom"]["activeExploration"]["exploration_timer"]
+          self.db["exploration_timer"] = data["kingdom"]["activeExploration"]["exploration_timer"]
           self.exploration = dataExplo
 
-        db["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+        self.db["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         success = True
       except KeyError as e:
         print("Failed to index {} in API data".format(str(e)))
@@ -91,6 +98,10 @@ class QueslarBot(commands.Bot):
       self.scheduler.add_job(self.alert_exploration, "date", run_date=end, id='exploration')
       #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='exploration') #Debugging alerts
       print("Starting alert for {} UTC...".format(end))
+
+    # Save data to *sigh* a txt file
+    with open("db.txt", "w") as f:
+      json.dump(self.db, f)
     
     return success
 
@@ -99,7 +110,7 @@ class QueslarBot(commands.Bot):
   async def setup_loop(self):
     await self.wait_until_ready()
     #Initialize channel
-    self.notificationChannel = self.get_channel(db.get("channelId"))
+    self.notificationChannel = self.get_channel(self.db.get("channelId"))
     if(not self.notificationChannel):
       print("Failed to find channel.")
 
@@ -148,14 +159,14 @@ class QueslarBot(commands.Bot):
     if len(gained) != 0 or len(lost) != 0:
       await self.post_tile_update(gained, lost)
       self.tiles = newTiles
-      db["tiles"] = tiles #Update db if anything changed
+      self.db["tiles"] = tiles #Update db if anything changed
 
 
   def set_notification_channel(self, channel):
     '''
     Sets the notification channel to the given channel.
     '''
-    db["channelId"] = channel.id
+    self.db["channelId"] = channel.id
     self.notificationChannel = channel
 
 
@@ -166,7 +177,7 @@ class QueslarBot(commands.Bot):
     embed = discord.Embed(title="Kingdom Tiles", color=0x0080c0)
     for tile in self.tiles:
       embed.add_field(name=tile.get_coords(), value=str(tile), inline=True)
-    embed.set_footer(text="Last updated: {} UTC".format(db.get("last_updated","Unknown")))
+    embed.set_footer(text="Last updated: {} UTC".format(self.db.get("last_updated","Unknown")))
     return embed
 
 

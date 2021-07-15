@@ -379,7 +379,7 @@ Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
     }
 
     for piece in equipment:
-      if piece["enchant_type"] in enchants:
+      if piece.get("enchant_type","") in enchants:
         enchants[piece["enchant_type"]][1] = piece["enchant_value"]**0.425 / 2 + \
                                              enchants[piece["enchant_type"]][1]
         enchants[piece["enchant_type"]][0] += 1

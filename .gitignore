@@ -134,4 +134,5 @@ poetry.lock
 pyproject.toml
 
 #Misc
-./db.txt
+db.txt
+

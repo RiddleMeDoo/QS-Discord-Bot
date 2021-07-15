@@ -6,8 +6,8 @@ from datetime import datetime
 class Market:
   def __init__(self):
     with open("db.txt","r") as f: #Not the best way of accessing data
-      db = json.load(f)
-    self.prices = db.get("prices", { 
+      self.db = json.load(f)
+    self.prices = self.db.get("prices", { 
         "meat" : "-1.0", # Must be str to get around db type restrictions
         "iron" : "-1.0",
         "wood" : "-1.0",
@@ -32,8 +32,8 @@ class Market:
         self.prices[currency] = str(item["price"])
     
 
-    db["prices"] = self.prices
-    db["market_last_updated"] = newPrices[0]["sent_time"]
+    self.db["prices"] = self.prices
+    self.db["market_last_updated"] = newPrices[0]["sent_time"]
     return True
 
 
@@ -56,7 +56,7 @@ class Market:
     Returns True if the most recent timestamp occured more 
     than 1 hour ago.
     '''
-    diff =  datetime.utcnow() - datetime.strptime(db.get("market_last_updated", "2000-01-01T00:00:00.000Z"), "%Y-%m-%dT%H:%M:%S.000Z")
+    diff =  datetime.utcnow() - datetime.strptime(self.db.get("market_last_updated", "2000-01-01T00:00:00.000Z"), "%Y-%m-%dT%H:%M:%S.000Z")
     minutes = diff.seconds / 60
     return minutes > 60
 

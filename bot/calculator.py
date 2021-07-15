@@ -55,7 +55,6 @@ def getHomesteadInvestment(level):
     
     for i in range(level // 250 + 1):
       base = 250 if level >= (i + 1) * 250 else level % 250
-      print(base)
       investment += increment * (base * (base + 1) / 2) + (initCost * base)
       initCost += increment * 250
       increment += 1000 #increases by 1000 every 250 levels

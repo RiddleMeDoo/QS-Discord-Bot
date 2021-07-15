@@ -12,7 +12,7 @@ A Discord bot for the browser game called Queslar.
 
 ### About
 
-This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It can be hosted on your computer as long as you have the correct packages installed. This bot is also set up to run on Heroku (an online hosting service). It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)) with an object-oriented approach.
+This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It can be hosted on your computer as long as you have the correct packages installed. This bot is also set up to run on [Heroku](https://heroku.com) (an online hosting service). It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)) with an object-oriented approach.
 
 ### Setup
 
@@ -35,11 +35,8 @@ NOTIFY_CHANNEL=[Channel Id]
 TAG=[roleId]
 ```
 
-**Bonus: Setting it up on the computer**
-
+**Bonus: Setting it up on the computer**  
 If you're hosting it yourself on the computer, please install Python 3.8+ and pip via the command line. I personally use Linux for this (WSL). Once you have pip installed, then enter `pip install [package_name]`. The `package_name`s can be found in `requirements.txt`. Install one on each line.
-
--
 
 Invite the bot to the server and let the program run on Python.  
 `NOTE: Make sure the bot can mention @here and the leader role.`

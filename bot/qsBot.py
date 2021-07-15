@@ -23,8 +23,16 @@ class QueslarBot(commands.Bot):
     #I can't believe I'm using a txt file for a database...
     # Temporary fix, I swear!
     self.db = {}
-    with open("db.txt", "r") as f:
-      self.db = json.load(f)
+    try:
+      with open("db.txt", "r") as f:
+        self.db = json.load(f)
+    except:
+      # In case file does not exist, create it
+      with open("db.txt", "w") as write_f:
+        write_f.write("{}")
+      with open("db.txt", "r") as f:
+        self.db = json.load(f)
+
 
     if "channelId" not in self.db:
       self.db["channelId"] = os.environ['NOTIFY_CHANNEL']

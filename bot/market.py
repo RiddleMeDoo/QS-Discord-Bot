@@ -34,6 +34,9 @@ class Market:
 
     self.db["prices"] = self.prices
     self.db["market_last_updated"] = newPrices[0]["sent_time"]
+    # Save new prices to the txt file
+    with open("db.txt", "w") as f:
+      json.dump(self.db, f)
     return True
 
 

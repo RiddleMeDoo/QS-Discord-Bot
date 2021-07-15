@@ -99,7 +99,7 @@ class QueslarBot(commands.Bot):
   async def setup_loop(self):
     await self.wait_until_ready()
     #Initialize channel
-    self.notificationChannel = self.get_channel(db.get("channelId"))
+    self.notificationChannel = self.get_channel(int(db.get("channelId")))
     if(not self.notificationChannel):
       print("Failed to find channel.")
 

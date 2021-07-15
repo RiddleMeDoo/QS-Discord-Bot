@@ -12,7 +12,9 @@ A Discord bot for the browser game called Queslar.
 
 ### About
 
-This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It is hosted on Repl.it (for now) and uses its custom database to store data. It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)) with an object-oriented approach.
+This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It is hosted on Repl.it (for this branch) and uses its custom database to store data. It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)) with an object-oriented approach.
+
+Please note that this branch is dedicated to hosting on Replit! For more general instructions, please refer to the main branch.
 
 ### Setup
 

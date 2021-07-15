@@ -12,11 +12,11 @@ A Discord bot for the browser game called Queslar.
 
 ### About
 
-This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It is hosted on Repl.it (for now) and uses its custom database to store data. It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)) with an object-oriented approach.
+This repository contains code to set up a Discord bot for the PBBG called Queslar. It is intended to help notify members of a discord channel of kingdom changes in the game. It can be hosted on your computer as long as you have the correct packages installed. This bot is also set up to run on Heroku (an online hosting service). It is built in Python with the discord.py package ([documentation](https://discordpy.readthedocs.io/en/stable/index.html)) with an object-oriented approach.
 
 ### Setup
 
-First, create a discord bot and set up the hosting solution of your choice. If you are not using Repl.it please edit the code accordingly to store data elsewhere. Repl.it also has different syntax to access environment variables.
+First, create a discord bot and set up the hosting solution of your choice. If you are hosting it on Heroku, then you will find that the Procfile, requirements.txt, and runtime.txt is set up for you already. Please follow a tutorial to run it on Heroku.
 
 To set this bot up, you will need the following:
 
@@ -25,8 +25,8 @@ To set this bot up, you will need the following:
 -   The channel id that the bot will send messages to.
 -   The role id of that the bot should tag for notifications.
 
-If you are not using Repl.it, copy and paste the following into a file called .env with the same format:
-If you are using Repl.it, put them into the secrets tab (found on the left side bar) with the following:
+If you are not using an online hosting service, copy and paste the following into a file called .env with the same format:
+If you are using a hosting service, put them into the appropriate "secret", "env", or "config" vars with the following:
 
 ```
 TOKEN=[Token]
@@ -35,7 +35,13 @@ NOTIFY_CHANNEL=[Channel Id]
 TAG=[roleId]
 ```
 
-Invite the bot to the server and let the program run.  
+**Bonus: Setting it up on the computer**
+
+If you're hosting it yourself on the computer, please install Python 3.8+ and pip via the command line. I personally use Linux for this (WSL). Once you have pip installed, then enter `pip install [package_name]`. The `package_name`s can be found in `requirements.txt`. Install one on each line.
+
+-
+
+Invite the bot to the server and let the program run on Python.  
 `NOTE: Make sure the bot can mention @here and the leader role.`
 
 ### Bot Commands

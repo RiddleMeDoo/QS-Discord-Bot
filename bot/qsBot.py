@@ -233,7 +233,7 @@ class QueslarBot(commands.Bot):
       return "Market could not update."
     data = await self.get_qs_data(key)
     if not data: return "Player key is not valid."
-    
+
     toStr = self.market.price_to_str #Because the function name is long
 
     # Basic info + currencies
@@ -320,6 +320,13 @@ class QueslarBot(commands.Bot):
     for type in hsLevels:
       homesteadInvestment += calc.getHomesteadInvestment(homestead[type]) * \
         float(self.market.prices[hsLevels[type]])
+    
+    ### Pet experience (from decorations)
+    decos = data.get("playerHomesteadDecorations", [])
+    petExp = 0
+    for decoration in decos:
+      if decoration.get("pet_exp_boost", 0) > 0:
+        petExp += decoration.get("pet_exp_boost", 0)
 
 
     msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\
@@ -328,6 +335,7 @@ Pet Costs: {} ({})\nPet Boosts: {}\n\
 Equipment Slots: {}\nPartner Relic Boosts: {}\n\
 Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
 Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
+Total Pet Exp Boost: {}%\n\
 ---------------------------------------------------------------------\n".format(
       toStr(partnerCost), len(partners), toStr(partnerInvestment),
       toStr(fighterCost), len(fighters), toStr(fighterInvestment), 
@@ -336,7 +344,8 @@ Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
       toStr(relicBattleInvestment), toStr(relicPartnerInvestment+relicBattleInvestment),
       toStr(houseInvestment), toStr(homesteadInvestment),
       homestead["fishing_level"], homestead["mine_level"],
-      homestead["logging_level"], homestead["farm_level"]
+      homestead["logging_level"], homestead["farm_level"],
+      petExp
     )
     
 

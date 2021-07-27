@@ -232,6 +232,8 @@ class QueslarBot(commands.Bot):
       print("Market could not update.")
       return "Market could not update."
     data = await self.get_qs_data(key)
+    if not data: return "Player key is not valid."
+    
     toStr = self.market.price_to_str #Because the function name is long
 
     # Basic info + currencies

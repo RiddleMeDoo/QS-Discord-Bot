@@ -1,18 +1,16 @@
-import json
 import aiohttp
 import os
 from datetime import datetime
+import database as db
 
 class Market:
   def __init__(self):
-    with open("db.txt","r") as f: #Not the best way of accessing data
-      self.db = json.load(f)
-    self.prices = self.db.get("prices", { 
-        "meat" : "-1.0", # Must be str to get around db type restrictions
-        "iron" : "-1.0",
-        "wood" : "-1.0",
-        "stone" : "-1.0",
-        "relics" : "-1.0"
+    self.prices = db.db_get("prices", { 
+        "meat" : -1.0,
+        "iron" : -1.0,
+        "wood" : -1.0,
+        "stone" : -1.0,
+        "relics" : -1.0
       }) 
 
 
@@ -32,11 +30,11 @@ class Market:
         self.prices[currency] = str(item["price"])
     
 
-    self.db["prices"] = self.prices
-    self.db["market_last_updated"] = newPrices[0]["sent_time"]
-    # Save new prices to the txt file
-    with open("db.txt", "w") as f:
-      json.dump(self.db, f)
+    toDB = {}
+    toDB["prices"] = self.prices
+    toDB["market_last_updated"] = newPrices[0]["sent_time"]
+    # Save new prices to the database
+    db.db_set_all(toDB)
     return True
 
 
@@ -59,7 +57,7 @@ class Market:
     Returns True if the most recent timestamp occured more 
     than 1 hour ago.
     '''
-    diff =  datetime.utcnow() - datetime.strptime(self.db.get("market_last_updated", "2000-01-01T00:00:00.000Z"), "%Y-%m-%dT%H:%M:%S.000Z")
+    diff =  datetime.utcnow() - datetime.strptime(db.db_get("market_last_updated", "2000-01-01T00:00:00.000Z"), "%Y-%m-%dT%H:%M:%S.000Z")
     minutes = diff.seconds / 60
     return minutes > 60
 
@@ -68,7 +66,10 @@ class Market:
     '''
     Return a truncated str version of the price
     '''
-    if price // 1000000000 > 0: #billion
+    if price // 1000000000000 > 0: #trillion
+      trunc = str(price / 1000000000000)
+      return trunc[:trunc.find(".")+3] + "t"
+    elif price // 1000000000 > 0: #billion
       trunc = str(price / 1000000000)
       return trunc[:trunc.find(".")+3] + "b"
     elif price // 1000000 > 0: #million

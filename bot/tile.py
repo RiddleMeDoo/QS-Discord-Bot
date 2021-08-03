@@ -1,4 +1,4 @@
-import json
+import database as db
 
 class Tile:
   def __init__(self,  tile):
@@ -15,13 +15,17 @@ class Tile:
     x = (self.id - 1) % 5 + 1
     return "({},{})".format(x, y)  
 
+  
+  def set_mystery(self, newMystery):
+    if self.type[0].startsWith("mystery"):
+      print('Setting {} to {}'.format(str(this), newMystery))
+      self.type = "mystery(" + newMystery + ")"
+
 
   def parse_tile(self, tile):
     if tile["type"] == "Minor" or tile["name"] == "Wild":
       if tile["resource_one_type"] == "mystery":
-        with open("db.txt","r") as f: #Not the best way of accessing data
-          db = json.load(f)
-        tileType = ["mystery({})".format(db.get("mystery"), "???")]
+        tileType = ["mystery({})".format(db.db_get("mystery", "???"))]
       else:
         tileType = [tile["resource_one_type"]]
       bonus = [tile["resource_one_value"]]

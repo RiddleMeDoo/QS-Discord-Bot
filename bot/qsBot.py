@@ -2,6 +2,7 @@ from discord.ext import tasks, commands
 import discord
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
+load_dotenv()
 import os
 import aiohttp
 from datetime import datetime
@@ -10,8 +11,8 @@ from tile import Tile
 from exploration import Exploration
 from market import Market
 import calculator as calc
+import database as db
 
-load_dotenv()
 
 class QueslarBot(commands.Bot):
   '''
@@ -20,19 +21,8 @@ class QueslarBot(commands.Bot):
   '''
   def __init__(self,  *args, **kwargs):
     super().__init__(*args, **kwargs)
-    #I can't believe I'm using a txt file for a database...
-    # Temporary fix, I swear!
-    self.db = {}
-    try:
-      with open("db.txt", "r") as f:
-        self.db = json.load(f)
-    except:
-      # In case file does not exist, create it
-      with open("db.txt", "w") as write_f:
-        write_f.write("{}")
-      with open("db.txt", "r") as f:
-        self.db = json.load(f)
-
+    
+    self.db = db.db_get_all()
 
     if "channelId" not in self.db:
       self.db["channelId"] = os.environ['NOTIFY_CHANNEL']
@@ -88,6 +78,9 @@ class QueslarBot(commands.Bot):
         if "mapMisc" in data["kingdom"] and self.mystery != data["kingdom"]["mapMisc"]["mystery_tile"]:
           self.mystery = data["kingdom"]["mapMisc"]["mystery_tile"]
           self.db["mystery"] = self.mystery
+          db.db_set("mystery", self.mystery) # Important to update asap
+          for tile in self.tiles:
+            tile.set_mystery(self.mystery)
 
         await self.update_tile_status(data["kingdom"]["tiles"])
 
@@ -110,9 +103,8 @@ class QueslarBot(commands.Bot):
       #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='exploration') #Debugging alerts
       print("Starting alert for {} UTC...".format(end))
 
-    # Save data to *sigh* a txt file
-    with open("db.txt", "w") as f:
-      json.dump(self.db, f)
+    # Save data to the cloud database
+    db.db_set_all(self.db)
     
     return success
 

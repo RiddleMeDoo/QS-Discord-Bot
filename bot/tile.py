@@ -18,7 +18,6 @@ class Tile:
   
   def set_mystery(self, newMystery):
     if self.type[0].startsWith("mystery"):
-      print('Setting {} to {}'.format(str(this), newMystery))
       self.type = "mystery(" + newMystery + ")"
 
 

@@ -2,8 +2,6 @@
 import redis
 import os
 import json
-#from dotenv import load_dotenv #For testing purposes
-#load_dotenv()
 
 # Connect to database
 redis = redis.Redis(

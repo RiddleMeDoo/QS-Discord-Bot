@@ -18,7 +18,7 @@ class Tile:
   
   def set_mystery(self, newMystery):
     if self.type[0].startswith("mystery"):
-      self.type = "mystery(" + newMystery + ")"
+      self.type = ["mystery(" + newMystery + ")"]
 
 
   def parse_tile(self, tile):

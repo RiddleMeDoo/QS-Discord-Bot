@@ -237,22 +237,22 @@ class QueslarBot(commands.Bot):
     creditsInv = "{} ({})".format(toStr(currency["credits"]),toStr(currency["bank_credits"]))
     relicsInv = "{} ({})".format(toStr(currency["relics"]), toStr(currency["bank_relics"]))
 
-    msg = "```Village: {}\nName: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}\n\
----------------------------------------------------------------------\n".format(
+    msg = """```Village: {}\nName: {}\nLevel: {}\nGold: {}\nCredits: {}\nRelics: {}
+---------------------------------------------------------------------\n""".format(
       village, username, level, goldInv, creditsInv, relicsInv
     )
 
     # Basic stats
     stats = data["stats"]
-    msg += "Strength: {}\nHealth: {}\nAgility: {}\nDexterity: {}\n\
----------------------------------------------------------------------\n".format(
+    msg += """Strength: {}\nHealth: {}\nAgility: {}\nDexterity: {}
+---------------------------------------------------------------------\n""".format(
       stats["strength"], stats["health"], stats["agility"], stats["dexterity"]
     )
 
     # Investment
     ### Partners
     partners = data["partners"]
-    partnerInvestment = 0
+    partnerInvestment = currency["shattered_partner_gold"]
     for partner in partners:
       partnerInvestment += calc.getPartnerInvestment(partner["speed"],partner["intelligence"])
 
@@ -264,7 +264,7 @@ class QueslarBot(commands.Bot):
 
     ### Fighters
     fighters = data["fighters"]
-    fighterInvestment = 0
+    fighterInvestment = currency["shattered_fighter_gold"]
     fighterCost = calc.getUnitInvestment(len(fighters) - 1)
 
     for fighter in fighters:
@@ -276,14 +276,22 @@ class QueslarBot(commands.Bot):
     matPrice = (float(self.market.prices["meat"]) + float(self.market.prices["iron"]) + \
         float(self.market.prices["wood"]) + float(self.market.prices["stone"])) #Used later
     eqSlotInvestment = calc.getEqSlotInvestment(eqSlotLevels) * matPrice
+    
+    ### Cave
+    cave = data["fighterCaveTools"]
+    caveInvestment = 0
+    caveUpgrades = ["archeology", "brush", "trowel", "map", "backpack", "torch", "scouting", "spade", "knife"]
+
+    for tool in caveUpgrades:
+      caveInvestment += round(calc.getCaveInvestment(cave[tool]) * matPrice)
    
     ### Relics
     boosts = data["boosts"]
     relicPrice = float(self.market.prices["relics"])
     battleBoostTypes = ["critChance", "critDamage", "multistrike", "healing", "defense"]
     partnerTypes = ["hunting_boost","mining_boost","woodcutting_boost","stonecarving_boost"]
-    relicBattleInvestment = 0
-    relicPartnerInvestment = 0
+    relicBattleInvestment = currency["shattered_battling_relics"] * relicPrice
+    relicPartnerInvestment = currency["shattered_partner_relics"] * relicPrice
 
     for boost in battleBoostTypes:
       relicBattleInvestment += round(calc.getRelicInvestment(boosts[boost]) * relicPrice)
@@ -294,10 +302,13 @@ class QueslarBot(commands.Bot):
     ### House
     house = data["house"]
     houseUpgrades = ["chairs", "stove", "sink", "basket", "pitchfork", "shed", "fountain", "tools", "barrel"]
+    livingRoom = ["table","candlestick","carpet","couch"]
     houseInvestment = 0
 
-    for type in houseUpgrades:
-      houseInvestment += calc.getHouseInvestment(house[type]) * matPrice
+    for deco in houseUpgrades:
+      houseInvestment += calc.getHouseInvestment(house[deco]) * matPrice
+    for deco in livingRoom:
+      houseInvestment += calc.getHouseInvestment(house[deco], 5000000) * matPrice
 
     ### Homesteads (HS)
     homestead = data["playerHomesteadData"]
@@ -321,16 +332,17 @@ class QueslarBot(commands.Bot):
         petExp += decoration.get("pet_exp_boost", 0)
 
 
-    msg += "Partner Costs: {} ({})\nPartner Boosts: {}\n\
-Fighter Costs: {} ({})\nFighter Boosts: {}\n\
-Pet Costs: {} ({})\nPet Boosts: {}\n\
-Equipment Slots: {}\nPartner Relic Boosts: {}\n\
-Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n\
-Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}\n\
-Total Pet Exp Boost: {}%\n\
----------------------------------------------------------------------\n".format(
+    msg += """Partner Costs: {} ({})\nPartner Boosts: {}\n
+Fighter Costs: {} ({})\nFighter Boosts: {}\nCave Investment: {}\n
+Pet Costs: {} ({})\nPet Boosts: {}\n
+Equipment Slots: {}\nPartner Relic Boosts: {}
+Battle Relic Boosts: {}\nTotal Relic Boosts: {}\nHome Investment: {}\n
+Homestead Investment: {}\nHomestead Levels: M: {}, I: {}, W: {}, S: {}
+Total Pet Exp Boost: {}%
+---------------------------------------------------------------------\n""".format(
       toStr(partnerCost), len(partners), toStr(partnerInvestment),
       toStr(fighterCost), len(fighters), toStr(fighterInvestment), 
+      toStr(caveInvestment),
       toStr(petCost), len(data["pets"]), toStr(petInvestment), 
       toStr(eqSlotInvestment), toStr(relicPartnerInvestment), 
       toStr(relicBattleInvestment), toStr(relicPartnerInvestment+relicBattleInvestment),
@@ -346,8 +358,8 @@ Total Pet Exp Boost: {}%\n\
       relicBattleInvestment + relicPartnerInvestment + \
       houseInvestment + homesteadInvestment
 
-    msg += "Self Investment Total: {}\n\
----------------------------------------------------------------------\n".format(
+    msg += """Self Investment Total: {}
+---------------------------------------------------------------------\n""".format(
       toStr(totalInvestment)
     )
 
@@ -398,10 +410,10 @@ Total Pet Exp Boost: {}%\n\
       eqDefense += round(piece["defense"] * eqTiers[piece["defense_tier"]])
     
 
-    msg += "Exp Enchants: {}% ({})\nGold Enchants: {}% ({})\n\
-Drop Enchants: {}% ({})\nStat Enchants: {}% ({})\n\
-Res Enchants: {}% ({})\n\
----------------------------------------------------------------------\n".format(
+    msg += """Exp Enchants: {}% ({})\nGold Enchants: {}% ({})
+Drop Enchants: {}% ({})\nStat Enchants: {}% ({})
+Res Enchants: {}% ({})
+---------------------------------------------------------------------\n""".format(
       round(enchants["experience"][1],2),round(enchants["experience"][0],2),
       round(enchants["gold"][1],2),round(enchants["gold"][0],2),
       round(enchants["drop"][1],2),round(enchants["drop"][0],2),
@@ -410,10 +422,10 @@ Res Enchants: {}% ({})\n\
       round(enchants["meat"][0]+enchants["iron"][0]+enchants["wood"][0]+enchants["stone"][0],2)
     )
 
-    msg += "Damage: {}    Defense: {}\n\
-Left Hand Stats: {} ({}+{})\nRight Hand Stats: {} ({}+{})\n\
-Helmet Stats: {} ({}+{})\nArmor Stats: {} ({}+{})\nGloves Stats: {} ({}+{})\n\
-Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```".format( 
+    msg += """Damage: {}    Defense: {}
+Left Hand Stats: {} ({}+{})\nRight Hand Stats: {} ({}+{})
+Helmet Stats: {} ({}+{})\nArmor Stats: {} ({}+{})\nGloves Stats: {} ({}+{})
+Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format( 
       eqDamage, eqDefense,
       equipmentStats[0], eqSlotLevels[0], equipment[0]["slot_tier"],
       equipmentStats[1], eqSlotLevels[1], equipment[1]["slot_tier"],

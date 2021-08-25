@@ -128,7 +128,7 @@ def getEqSlotInvestment(eqSlotLevels):
   return investment
 
 
-def getHouseInvestment(level):
+def getHouseInvestment(level, base=1000):
   '''
   Returns the amount of a single type of res used in house upgrades,
   given the level. For a complete amount, multiply the return value
@@ -139,5 +139,13 @@ def getHouseInvestment(level):
 
   # Couldn't find a closed formula
   for i in range(1, level + 1):
-    investment += 1000 + (1000 * (i - 1)**1.25)
+    investment += base + (base * (i - 1)**1.25)
   return investment
+
+def getCaveInvestment(level):
+  '''
+  Returns the amount of a single type of res used in the cave upgrade
+  given the level. For a complete res amount, multiply the return
+  value by 4.
+  '''
+  return level * (level + 1) / 2 * 4000

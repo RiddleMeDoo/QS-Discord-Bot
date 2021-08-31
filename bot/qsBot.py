@@ -29,7 +29,6 @@ class QueslarBot(commands.Bot):
 
     
     self.notificationChannel = None #Initialized in setup_loop
-    self.tagId = os.environ['TAG']
 
     self.tiles = [Tile(t) for t in self.db.get("tiles", [])]
     self.mystery = self.db.get("mystery","???")
@@ -48,8 +47,8 @@ class QueslarBot(commands.Bot):
     Sends a message to the notification channel when
     the exploration finishes.
     '''
-    print("Alert: Exploration done.".format(self.tagId))
-    await self.notificationChannel.send("<@&{}> Exploration done!".format(self.tagId))
+    print("Alert: Exploration done.")
+    await self.notificationChannel.send("@here Exploration done!")
 
 
   async def alert_test(self):

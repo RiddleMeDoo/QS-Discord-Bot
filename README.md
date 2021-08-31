@@ -23,7 +23,6 @@ To set this bot up, you will need the following:
 -   A discord bot's token
 -   A player's API key
 -   The channel id that the bot will send messages to.
--   The role id of that the bot should tag for notifications.
 -   Your database credentials. For Redis it is URL, port, and password.
 
 If you are not using an online hosting service, copy and paste the following into a file called .env with the same format: (see code chunk below)
@@ -33,7 +32,6 @@ If you are using a hosting service, put them into the appropriate "secret", "env
 TOKEN=[Token]
 QS_KEY=[API key]
 NOTIFY_CHANNEL=[Channel Id]
-TAG=[roleId]
 REDIS_HOSTNAME=[Redis host name]
 REDIS_PORT=[Redis port number]
 REDIS_PASSWORD=[Redis password to the database, may be optional]

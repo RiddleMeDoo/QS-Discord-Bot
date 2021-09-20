@@ -51,6 +51,17 @@ class QueslarBot(commands.Bot):
     await self.notificationChannel.send("@here Exploration done!")
 
 
+  async def alert_reminder(self):
+    '''
+    Sends a reminder to the notification channel when
+    the exploration is nearly finished.
+    '''
+    await self.notificationChannel.send(
+      "@here Exploration will end in {} minutes."
+      .format(self.exploration.get_reminder_interval())
+    )
+
+
   async def alert_test(self):
     '''
     Debugging method for sending test message
@@ -98,8 +109,10 @@ class QueslarBot(commands.Bot):
     # Start exploration timer if there isn't one
     if len(self.scheduler.get_jobs()) == 0 and not self.exploration.is_done():
       end = self.exploration.get_end_time()
+      remind = self.exploration.get_reminder_time()
       self.scheduler.add_job(self.alert_exploration, "date", run_date=end, id='exploration')
-      #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='exploration') #Debugging alerts
+      self.scheduler.add_job(self.alert_reminder, "date", run_date=remind, id='explorationReminder')
+      #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='test') #Debugging alerts
       print("Starting alert for {} UTC...".format(end))
 
     # Save data to the cloud database
@@ -206,6 +219,7 @@ class QueslarBot(commands.Bot):
   async def stop_timer(self):
     self.scheduler.pause()
     self.scheduler.remove_job("exploration")
+    self.scheduler.remove_job("explorationReminder")
 
   async def restart_timer(self):
     self.scheduler.resume()

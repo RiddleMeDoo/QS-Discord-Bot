@@ -13,6 +13,7 @@ class Market:
         "relics" : -1.0,
         "diamonds" : -1.0
       }) 
+    print(self.prices)
 
 
   async def update(self):
@@ -27,7 +28,7 @@ class Market:
       currency = item["currency_type"]
       newPrice = self.prices.get(currency, 0)
       #Only update if it's one of the 6 types in self.prices
-      if item["market_type"] == "buy" and newPrice:
+      if item["market_type"] == "buy" and (currency == "diamonds" or newPrice):
         self.prices[currency] = str(item["price"])
     
 

@@ -296,7 +296,7 @@ class QueslarBot(commands.Bot):
     caveUpgrades = ["archeology", "brush", "trowel", "map", "backpack", "torch", "scouting", "spade", "knife"]
 
     for tool in caveUpgrades:
-      caveInvestment += round(calc.getCaveInvestment(cave[tool]) * matPrice)
+      caveInvestment += calc.getCaveInvestment(cave[tool], matPrice, float(self.market.prices["diamonds"]))
    
     ### Relics
     boosts = data["boosts"]

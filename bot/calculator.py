@@ -142,10 +142,10 @@ def getHouseInvestment(level, base=1000):
     investment += base + (base * (i - 1)**1.25)
   return investment
 
-def getCaveInvestment(level):
+def getCaveInvestment(level, resPrice, diamondPrice):
   '''
-  Returns the amount of a single type of res used in the cave upgrade
-  given the level. For a complete res amount, multiply the return
-  value by 4.
+  Returns a cave upgrade's investment, converting res and diamonds
+  used into gold.
   '''
-  return level * (level + 1) / 2 * 4000
+  diamondInvestment = level * (level + 1) / 2 * float(diamondPrice)
+  return round(level * (level + 1) / 2 * 4000 * resPrice + diamondInvestment)

@@ -84,3 +84,10 @@ class Market:
     else:
       trunc = str(price/1)
       return trunc[:trunc.find(".")+3]
+
+
+  def __str__(self):
+    return "Meat: {}\nIron: {}\nWood: {}\nStone: {}\nRelics: {}\nDiamonds: {}".format(
+      self.prices["meat"],self.prices["iron"],self.prices["wood"],self.prices["stone"],
+      self.prices["relics"],self.prices["diamonds"]
+    )

@@ -232,10 +232,23 @@ class QueslarBot(commands.Bot):
     return str(self.exploration)
   
 
+  async def get_market(self):
+    '''
+    Return a formatted message containing market prices
+    '''
+    return """Last updated: {}
+    ```
+{}```""".format(self.db["market_last_updated"], str(self.market))
+
+
   async def get_player_investments(self, key):
-    if self.market.is_outdated() and not await self.market.update():
-      print("Market could not update.")
-      return "Market could not update."
+    if self.market.is_outdated():
+      if not await self.market.update():
+        print("Market could not update.")
+        return "Market could not update."
+      else:
+        self.db["market_last_updated"] = db.db_get("market_last_updated", "Unknown")
+
     data = await self.get_qs_data(key)
     if not data: return "Player key is not valid."
 

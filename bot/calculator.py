@@ -5,6 +5,14 @@ def getUnitInvestment(num):
   '''
   return int("1" * num + "0000")
 
+
+def getPlotInvestment(num):
+  '''
+  Returns the total amount of res invested into buying num plots.
+  '''
+  return 0 if num <= 1 else int("2500" + "0" * num)
+
+
 def getRelicInvestment(level):
   '''
   Returns the amount of relics invested according to the level

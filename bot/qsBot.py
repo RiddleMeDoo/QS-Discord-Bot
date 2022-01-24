@@ -336,6 +336,8 @@ class QueslarBot(commands.Bot):
     for type in hsLevels:
       homesteadInvestment += calc.getHomesteadInvestment(homestead[type]) * \
         float(self.market.prices[hsLevels[type]])
+    # Add plot investment too
+    homesteadInvestment += calc.getPlotInvestment(homestead["plots"]) * matPrice
     
     ### Pet experience (from decorations)
     decos = data.get("playerHomesteadDecorations", [])

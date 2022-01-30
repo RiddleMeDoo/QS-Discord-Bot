@@ -1,3 +1,5 @@
+from datetime import datetime
+
 def getUnitInvestment(num):
   '''
   Returns the total amount of gold invested into buying num units.
@@ -157,3 +159,89 @@ def getCaveInvestment(level, resPrice, diamondPrice):
   '''
   diamondInvestment = level * (level + 1) / 2 * float(diamondPrice)
   return round(level * (level + 1) / 2 * 4000 * resPrice + diamondInvestment)
+
+def getBuildingBoost(level):
+  '''
+  Gets the boost according to the village building's level
+  '''
+  return (level // 20 * (level // 20 + 1) / 2 * 20 + level % 20 * (level // 20 + 1) / 100)
+
+
+def getTileBoost(tiles, boostType):
+  '''
+  Returns the total boost in a list of tiles, related to the type of tile 
+  '''
+  boost = 0
+  for tile in tiles:
+    if tile["resource_one_type"] == boostType:
+      boost += tile["resource_one_value"]
+    elif tile["resource_two_type"] == boostType:
+      boost += tile["resource_two_value"]
+    elif tile["resource_three_type"] == boostType:
+      boost += tile["resource_three_value"]
+  return boost / 100
+
+def getGemBoost(equipped, type):
+  '''
+  Returns the total boost of a certain type, from a list of equipped items.
+  Splinters are included.
+  '''
+  boost = 0
+  for gear in equipped:
+    if gear["gem_type"] == boostType:
+      boost += gear["gem_value"]
+    elif gear["gem_splinter_type"] == boostType: #Cannot have same type on gem and splinter
+      if datetime.now(datetime.timezone.utc) < datetime.strptime(gear["gem_splinter_time"], "%Y-%m-%dT%H:%M:%S.000Z"):
+        multiplier = 0.4
+      else:
+        multiplier = 0.2
+      
+      boost += gear["gem_level"] * multiplier
+
+  return boost / 100
+
+
+def getPersonalGoldIncome(data, enchantment):
+  # Current mob, Level, Enchant, Exploration, Building, Party, V-Tile, KD-Tile, village boost tile, VIP, Frenzy
+  monster = data["actions"]["monster_id"]
+  level = data["skills"]["battling"] / 10000
+
+  if "kingdom" in data:
+    exploration = data["kingdom"]["explorationBoosts"]["gold"] / 100
+    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "gold")
+    villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
+  else: 
+    exploration = 0
+    kingdomTile = 0
+    villageBoostTile = 0
+
+  if "village" in data:
+    building = getBuildingBoost(data["village"]["boosts"]["market"])
+    villageTile = getTileBoost(data["village"]["tiles"], "gold")
+  else:
+    building = 0
+    villageTile = 0
+  
+  if "partyPvPData" in data and "gold" in data["partyPvPData"]:
+    party = data["partyPvPData"]["gold"] / 100
+  else:
+    party = 0
+
+  vipExpiryDate = data["player"]["vip_time"]
+  if datetime.now(datetime.timezone.utc) < datetime.strptime(vipExpiryDate, "%Y-%m-%dT%H:%M:%S.000Z"):
+    vip = 0.1
+  else:
+    vip = 0
+  
+  frenzy = getGemBoost(data["equipmentEquipped"], "frenzy")
+  pve = level + enchantment + exploration + building
+  pvp = party + villageTile + kingdomTile + ((1 + villageBoostTile) * building - building)
+  regularGoldPerAction = round((8 + 2 * monster) * (1 + pve) * (1 + pvp) * (1 + vip))
+  frenzyGoldPerAction = regularGoldPerAction
+  for i in range(1, int(frenzy) + 1):
+    frenzyGoldPerAction += regularGoldPerAction * ((0.65**i) / 1.3 + 0.02)
+  # Remaining % of frenzy (chance)
+  frenzyGoldPerAction += regularGoldPerAction * (frenzy % 1) * ((0.65**(i+1)) / 1.3 + 0.02)
+  return frenzyGoldPerAction
+
+    

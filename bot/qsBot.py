@@ -463,5 +463,13 @@ Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format(
       equipmentStats[5], eqSlotLevels[5], equipment[5]["slot_tier"],
       equipmentStats[6], eqSlotLevels[6], equipment[6]["slot_tier"]
     )
+
+    ### Income info
+    ## Gold
+    goldPerAction = calc.getPersonalGoldIncome(data, enchants["gold"][1]) * 14400
+    
+    
+    # Res
+    # Relics
     
     return msg

@@ -466,10 +466,9 @@ Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format(
 
     ### Income info
     ## Gold
-    goldPerAction = calc.getPersonalGoldIncome(data, enchants["gold"][1]) * 14400
-    
-    
+    goldPerDay = calc.getPersonalGoldIncome(data, enchants["gold"][1]) * 14400
     # Res
+    resPerDay = calc.getPartnerResIncomeHr(data) * 24
     # Relics
     
     return msg

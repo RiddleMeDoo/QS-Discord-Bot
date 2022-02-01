@@ -201,6 +201,25 @@ def getGemBoost(equipped, type):
   return boost / 100
 
 
+def hasVip(expiryDate):
+  '''
+  Return True if vip is active
+  '''
+  return datetime.now(datetime.timezone.utc) < datetime.strptime(expiryDate, "%Y-%m-%dT%H:%M:%S.000Z")
+
+
+def getEnchantBoost(equipment, enchantType):
+  '''
+  Returns the boost corresponding to the enchantment type.
+  '''
+  boost = 0
+  for piece in equipment:
+    if piece.get("enchant_type","") == enchantType:
+      boost += piece["enchant_value"]**0.425 / 2
+
+  return boost
+
+
 def getPersonalGoldIncome(data, enchantment):
   # Current mob, Level, Enchant, Exploration, Building, Party, V-Tile, KD-Tile, village boost tile, VIP, Frenzy
   monster = data["actions"]["monster_id"]
@@ -228,10 +247,7 @@ def getPersonalGoldIncome(data, enchantment):
     party = 0
 
   vipExpiryDate = data["player"]["vip_time"]
-  if datetime.now(datetime.timezone.utc) < datetime.strptime(vipExpiryDate, "%Y-%m-%dT%H:%M:%S.000Z"):
-    vip = 0.1
-  else:
-    vip = 0
+  vip = 0.1 if hasVip(vipExpiryDate) else 0
   
   frenzy = getGemBoost(data["equipmentEquipped"], "frenzy")
   pve = level + enchantment + exploration + building
@@ -243,5 +259,127 @@ def getPersonalGoldIncome(data, enchantment):
   # Remaining % of frenzy (chance)
   frenzyGoldPerAction += regularGoldPerAction * (frenzy % 1) * ((0.65**(i+1)) / 1.3 + 0.02)
   return frenzyGoldPerAction
+
+
+def getHouseBoost(level):
+  '''
+  Returns the house boost corresponding to the level
+  '''
+  if level == 0: return 0
+
+  boost = 0
+  for i in range(1, int(level / 15) + 1):
+    boost += min(i * 15, 150)
+  boost += (level % 15) * min(i, 10)
+  return boost / 100
+
+
+def getPartnerLevel(partner, resType):
+  '''
+  Returns the partner level corresponding to the resType
+  '''
+  if resType == "meat":
+    return partner["hunting"]
+  elif resType == "iron":
+    return partner["mining"]
+  elif resType == "wood":
+    return partner["woodcutting"]
+  else:
+    return partner["stonecarving"]
+
+
+def getBaseRes(stat):
+  '''
+  Returns the base res, which is calculated from the stat.
+  '''
+  baseRes = 1
+  multiplier = 3
+
+  for tempStat in range(stat, 0, -20000):
+    baseRes += min(tempStat, 20000) / 100 * multiplier
+    if multiplier > 0.3:
+      multiplier -= 0.05 if multiplier > 1.8 else 0.1
+
+  return baseRes
+
+
+def getPartnerResIncomeHr(data):
+  #boost, enchant, exploration, building, house, party, kd-tile, v-tile, v-boost tile, vip
+  relicBoosts = {
+    meat: data["boosts"]["hunting_boost"] * 0.0025,
+    iron: data["boosts"]["mining_boost"] * 0.0025,
+    wood: data["boosts"]["woodcutting_boost"] * 0.0025,
+    stone: data["boosts"]["stonecarving_boost"] * 0.0025
+  }
+  equipment = data["equipmentEquipped"]
+  enchants = {
+    meat: 0, iron: 0, wood: 0, stone: 0
+  }
+  for piece in equipment:
+    if piece.get("enchant_type","") in enchants:
+      enchants["enchant_type"] = piece["enchant_value"]**0.425 / 2 + enchants["enchant_type"]
+
+  houseUpgrades = {
+    meat: getHouseBoost(data["house"]["pitchfork"]),
+    iron: getHouseBoost(data["house"]["fountain"]),
+    wood: getHouseBoost(data["house"]["tools"]),
+    stone: getHouseBoost(data["house"]["shed"])
+  }
+
+  if "kingdom" in data:
+    exploration = data["kingdom"]["explorationBoosts"]["resource"] / 100
+    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "resource")
+    villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
+    explorationPenalty = data["kingdom"]["activeExploration"]["cost"] / 100
+  else: 
+    exploration = 0
+    kingdomTile = 0
+    villageBoostTile = 0
+    explorationPenalty = 0
+
+  if "village" in data:
+    building = getBuildingBoost(data["village"]["boosts"]["mill"])
+    villageTile = getTileBoost(data["village"]["tiles"], "resource")
+  else:
+    building = 0
+    villageTile = 0
+  
+  if "partyPvPData" in data and "resource" in data["partyPvPData"]:
+    party = data["partyPvPData"]["resource"] / 100
+  else:
+    party = 0
+
+  vipExpiryDate = data["player"]["vip_time"]
+  vip = 0.1 if hasVip(vipExpiryDate) else 0
+
+  pve = exploration + building #The rest will be added later
+  pvp = party + kingdomTile + villageTile + ((1 + villageBoostTile) * building - building)
+
+  resTypes = {1:"meat", 2:"iron", 3:"wood", 4:"stone"}
+  statTypes = {meat:"strength", iron:"health", wood:"agility", stone:"dexterity"}
+
+  # Calculate res per hour for each partner
+  resIncomePerHour = 0
+  for partner in data["partners"]:
+    resType = resTypes[partner["action_id"]]
+    level = getPartnerLevel(partner, resType) / 100
+    speed = (18 / (0.1 + partner["speed"] / (partner["speed"] + 2500)))
+    intelligence = partner["intelligence"]
+    playerStat = data["stats"][statTypes[resType]]
+    totalStat = round(
+    ((20 + (intelligence / (intelligence + 250)) * 100) / 100) * playerStat \
+    + partner[statTypes[resType]])
+
+    pve += level + enchants[resType] + houseUpgrades[resType]
+    totalBoost = (1 + pve) * (1 + pvp) * (1 + vip)
+
+    baseRes = getBaseRes(totalStat)
+    resPerHarvest = round(baseRes * totalBoost * (1 - explorationPenalty))
+    resIncomePerHour += round(resPerHarvest * (3600 / speed))
+
+
+  return resIncomePerHour
+    
+
 
     

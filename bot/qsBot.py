@@ -470,5 +470,6 @@ Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format(
     # Res
     resPerDay = calc.getPartnerResIncomeHr(data) * 24
     # Relics
+    relicsPerDay = calc.getRelicIncomeHr(data, enchants["drop"][1]) * 24
     
     return msg

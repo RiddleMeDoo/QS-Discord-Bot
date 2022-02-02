@@ -379,7 +379,60 @@ def getPartnerResIncomeHr(data):
 
 
   return resIncomePerHour
-    
 
 
+def getRelicIncomeHr(data, enchantment):
+  '''
+  Returns the amount of relics gathered by player and partners per hour,
+  given the API data and enchantment (because getting enchant % is a pain)
+  '''
+  dungeonLvl = data["playerFighterData"]["dungeon_level"]
+
+  # Player
+  playerLvl = data["skills"]["battling"] / 10000
+  dropAmount = 225 * (1 + 0.02 * dungeonLvl) * (1 + playerLvl)
+
+  area = data["actions"]["monster_id"] // 100 * 0.05
+  
+  if "kingdom" in data:
+    exploration = data["kingdom"]["explorationBoosts"]["drop"] / 100
+    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "drop")
+    villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
+  else: 
+    exploration = 0
+    kingdomTile = 0
+    villageBoostTile = 0
+
+  if "village" in data:
+    building = getBuildingBoost(data["village"]["boosts"]["market"])
+    villageTile = getTileBoost(data["village"]["tiles"], "drop")
+  else:
+    building = 0
+    villageTile = 0
+  
+  if "partyPvPData" in data and "drop" in data["partyPvPData"]:
+    party = data["partyPvPData"]["drop"] / 100
+  else:
+    party = 0
+
+  pve = area + building + exploration + enchantment 
+  pvp = party + kingdomTile + villageTile + ((1 + villageBoostTile) * building - building)
+
+  dropChance = 0.01 * (1 + pve) * (1 + pvp)
+  relicsPerHour = round(600 * dropChance * dropAmount)
+
+  # Partners
+  pve -= area # partners do not use player area
+  resTypes = {1:"meat", 2:"iron", 3:"wood", 4:"stone"}
+  
+  for partner in data["partners"]:
+    resType = resTypes[partner["action_id"]]
+    level = getPartnerLevel(partner, resType) / 10000
+    speed = (18 / (0.1 + partner["speed"] / (partner["speed"] + 2500)))
+
+    dropAmount = 225 * (1 + 0.02 * dungeonLvl) * (1 + level)
+    dropChance = 0.03 * (1 + pve) * (1 + pvp)
+    relicsPerHour += round(dropAmount * dropChance * (3600 / speed))
+  
+  return relicsPerHour
     

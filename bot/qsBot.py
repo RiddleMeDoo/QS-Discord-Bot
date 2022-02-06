@@ -435,7 +435,7 @@ Total Pet Exp Boost: {}%
       equipmentStats.append(totalStats)
 
       eqDamage += round(piece["damage"] * eqTiers[piece["damage_tier"]])
-      eqDefense += round(piece["defense"] * eqTiers[piece["defense_tier"]])
+      eqDefense += round(piece["defense"] * eqTiers[piece["defense_tier"]]) #TODO: Display proper dmg/def values including pet+gods
     
 
     msg += """Exp Enchants: {}% ({})\nGold Enchants: {}% ({})
@@ -450,10 +450,11 @@ Res Enchants: {}% ({})
       round(enchants["meat"][0]+enchants["iron"][0]+enchants["wood"][0]+enchants["stone"][0],2)
     )
 
-    msg += """Damage: {}    Defense: {}
-Left Hand Stats: {} ({}+{})\nRight Hand Stats: {} ({}+{})
-Helmet Stats: {} ({}+{})\nArmor Stats: {} ({}+{})\nGloves Stats: {} ({}+{})
-Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format( 
+    msg += """Damage: {:,}    Defense: {:,}
+Left Hand Stats: {:,} ({}+{})\nRight Hand Stats: {:,} ({}+{})
+Helmet Stats: {:,} ({}+{})\nArmor Stats: {:,} ({}+{})\nGloves Stats: {:,} ({}+{})
+Legging Stats: {:,} ({}+{})\nBoots Stats: {:,} ({}+{})
+---------------------------------------------------------------------\n""".format( 
       eqDamage, eqDefense,
       equipmentStats[0], eqSlotLevels[0], equipment[0]["slot_tier"],
       equipmentStats[1], eqSlotLevels[1], equipment[1]["slot_tier"],
@@ -466,10 +467,19 @@ Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format(
 
     ### Income info
     ## Gold
-    goldPerDay = calc.getPersonalGoldIncome(data, enchants["gold"][1]) * 14400
+    goldPerDay = calc.getPersonalGoldIncome(data, enchants["gold"][1] / 100) * 14400
     # Res
     resPerDay = calc.getPartnerResIncomeHr(data) * 24
     # Relics
-    relicsPerDay = calc.getRelicIncomeHr(data, enchants["drop"][1]) * 24
+    relicsPerDay = calc.getRelicIncomeHr(data, enchants["drop"][1] / 100) * 24
+
+    msg += """Income (Party not included)
+Gold/day: {} ({:,})
+Res/day: {} ({:,})
+Relics/day: {} ({:,})```""".format( 
+      toStr(goldPerDay), goldPerDay, 
+      toStr(resPerDay), resPerDay, 
+      toStr(relicsPerDay), relicsPerDay
+    )
     
     return msg

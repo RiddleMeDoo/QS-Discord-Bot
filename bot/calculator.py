@@ -164,7 +164,8 @@ def getBuildingBoost(level):
   '''
   Gets the boost according to the village building's level
   '''
-  return (level // 20 * (level // 20 + 1) / 2 * 20 + level % 20 * (level // 20 + 1) / 100)
+  return ((level // 20) * (level // 20 + 1) / 2 * 20 \
+    + (level % 20) * (level // 20 + 1)) / 100
 
 
 def getTileBoost(tiles, boostType):
@@ -181,17 +182,17 @@ def getTileBoost(tiles, boostType):
       boost += tile["resource_three_value"]
   return boost / 100
 
-def getGemBoost(equipped, type):
+def getGemBoost(equipped, boostType):
   '''
   Returns the total boost of a certain type, from a list of equipped items.
   Splinters are included.
   '''
   boost = 0
   for gear in equipped:
-    if gear["gem_type"] == boostType:
+    if gear.get("gem_type", "") == boostType:
       boost += gear["gem_value"]
-    elif gear["gem_splinter_type"] == boostType: #Cannot have same type on gem and splinter
-      if datetime.now(datetime.timezone.utc) < datetime.strptime(gear["gem_splinter_time"], "%Y-%m-%dT%H:%M:%S.000Z"):
+    elif gear.get("gem_splinter_type", "") == boostType: #Cannot have same type on gem and splinter
+      if datetime.utcnow() < datetime.strptime(gear["gem_splinter_time"], "%Y-%m-%dT%H:%M:%S.000Z"):
         multiplier = 0.4
       else:
         multiplier = 0.2
@@ -205,7 +206,8 @@ def hasVip(expiryDate):
   '''
   Return True if vip is active
   '''
-  return datetime.now(datetime.timezone.utc) < datetime.strptime(expiryDate, "%Y-%m-%dT%H:%M:%S.000Z")
+  return expiryDate != '0000-00-00 00:00:00' and \
+    datetime.utcnow() < datetime.strptime(expiryDate, "%Y-%m-%dT%H:%M:%S.000Z")
 
 
 def getEnchantBoost(equipment, enchantType):
@@ -217,7 +219,7 @@ def getEnchantBoost(equipment, enchantType):
     if piece.get("enchant_type","") == enchantType:
       boost += piece["enchant_value"]**0.425 / 2
 
-  return boost
+  return boost / 100
 
 
 def getPersonalGoldIncome(data, enchantment):
@@ -225,7 +227,7 @@ def getPersonalGoldIncome(data, enchantment):
   monster = data["actions"]["monster_id"]
   level = data["skills"]["battling"] / 10000
 
-  if "kingdom" in data:
+  if "kingdom" in data and "explorationBoosts" in data["kingdom"]:
     exploration = data["kingdom"]["explorationBoosts"]["gold"] / 100
     kingdomTile = getTileBoost(data["kingdom"]["tiles"], "gold")
     villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
@@ -234,7 +236,7 @@ def getPersonalGoldIncome(data, enchantment):
     kingdomTile = 0
     villageBoostTile = 0
 
-  if "village" in data:
+  if "village" in data and "boosts" in data["village"]:
     building = getBuildingBoost(data["village"]["boosts"]["market"])
     villageTile = getTileBoost(data["village"]["tiles"], "gold")
   else:
@@ -254,11 +256,14 @@ def getPersonalGoldIncome(data, enchantment):
   pvp = party + villageTile + kingdomTile + ((1 + villageBoostTile) * building - building)
   regularGoldPerAction = round((8 + 2 * monster) * (1 + pve) * (1 + pvp) * (1 + vip))
   frenzyGoldPerAction = regularGoldPerAction
-  for i in range(1, int(frenzy) + 1):
-    frenzyGoldPerAction += regularGoldPerAction * ((0.65**i) / 1.3 + 0.02)
+  
+  numKills = 1
+  for _ in range(1, int(frenzy) + 1):
+    frenzyGoldPerAction += regularGoldPerAction * ((0.65**numKills) / 1.3 + 0.02)
+    numKills += 1
   # Remaining % of frenzy (chance)
-  frenzyGoldPerAction += regularGoldPerAction * (frenzy % 1) * ((0.65**(i+1)) / 1.3 + 0.02)
-  return frenzyGoldPerAction
+  frenzyGoldPerAction += regularGoldPerAction * (frenzy % 1) * ((0.65**(numKills)) / 1.3 + 0.02)
+  return round(frenzyGoldPerAction)
 
 
 def getHouseBoost(level):
@@ -268,9 +273,11 @@ def getHouseBoost(level):
   if level == 0: return 0
 
   boost = 0
-  for i in range(1, int(level / 15) + 1):
-    boost += min(i * 15, 150)
-  boost += (level % 15) * min(i, 10)
+  multiplier = 0
+  for _ in range(1, int(level / 15) + 1):
+    multiplier += 1
+    boost += min(multiplier * 15, 150)
+  boost += (level % 15) * min(multiplier, 10)
   return boost / 100
 
 
@@ -306,27 +313,27 @@ def getBaseRes(stat):
 def getPartnerResIncomeHr(data):
   #boost, enchant, exploration, building, house, party, kd-tile, v-tile, v-boost tile, vip
   relicBoosts = {
-    meat: data["boosts"]["hunting_boost"] * 0.0025,
-    iron: data["boosts"]["mining_boost"] * 0.0025,
-    wood: data["boosts"]["woodcutting_boost"] * 0.0025,
-    stone: data["boosts"]["stonecarving_boost"] * 0.0025
+    "meat": data["boosts"]["hunting_boost"] * 0.00025,
+    "iron": data["boosts"]["mining_boost"] * 0.00025,
+    "wood": data["boosts"]["woodcutting_boost"] * 0.00025,
+    "stone": data["boosts"]["stonecarving_boost"] * 0.00025
   }
   equipment = data["equipmentEquipped"]
   enchants = {
-    meat: 0, iron: 0, wood: 0, stone: 0
+    "meat": 0, "iron": 0, "wood": 0, "stone": 0
   }
   for piece in equipment:
     if piece.get("enchant_type","") in enchants:
-      enchants["enchant_type"] = piece["enchant_value"]**0.425 / 2 + enchants["enchant_type"]
+      enchants[piece["enchant_type"]] = piece["enchant_value"]**0.425 / 2 + enchants[piece["enchant_type"]]
 
   houseUpgrades = {
-    meat: getHouseBoost(data["house"]["pitchfork"]),
-    iron: getHouseBoost(data["house"]["fountain"]),
-    wood: getHouseBoost(data["house"]["tools"]),
-    stone: getHouseBoost(data["house"]["shed"])
+    "meat": getHouseBoost(data["house"]["pitchfork"]),
+    "iron": getHouseBoost(data["house"]["fountain"]),
+    "wood": getHouseBoost(data["house"]["tools"]),
+    "stone": getHouseBoost(data["house"]["shed"])
   }
 
-  if "kingdom" in data:
+  if "kingdom" in data and "explorationBoosts" in data["kingdom"]:
     exploration = data["kingdom"]["explorationBoosts"]["resource"] / 100
     kingdomTile = getTileBoost(data["kingdom"]["tiles"], "resource")
     villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
@@ -337,7 +344,7 @@ def getPartnerResIncomeHr(data):
     villageBoostTile = 0
     explorationPenalty = 0
 
-  if "village" in data:
+  if "village" in data and "boosts" in data["village"]:
     building = getBuildingBoost(data["village"]["boosts"]["mill"])
     villageTile = getTileBoost(data["village"]["tiles"], "resource")
   else:
@@ -356,13 +363,13 @@ def getPartnerResIncomeHr(data):
   pvp = party + kingdomTile + villageTile + ((1 + villageBoostTile) * building - building)
 
   resTypes = {1:"meat", 2:"iron", 3:"wood", 4:"stone"}
-  statTypes = {meat:"strength", iron:"health", wood:"agility", stone:"dexterity"}
+  statTypes = {"meat":"strength", "iron":"health", "wood":"agility", "stone":"dexterity"}
 
   # Calculate res per hour for each partner
   resIncomePerHour = 0
   for partner in data["partners"]:
     resType = resTypes[partner["action_id"]]
-    level = getPartnerLevel(partner, resType) / 100
+    level = getPartnerLevel(partner, resType) / 10000
     speed = (18 / (0.1 + partner["speed"] / (partner["speed"] + 2500)))
     intelligence = partner["intelligence"]
     playerStat = data["stats"][statTypes[resType]]
@@ -370,8 +377,8 @@ def getPartnerResIncomeHr(data):
     ((20 + (intelligence / (intelligence + 250)) * 100) / 100) * playerStat \
     + partner[statTypes[resType]])
 
-    pve += level + enchants[resType] + houseUpgrades[resType]
-    totalBoost = (1 + pve) * (1 + pvp) * (1 + vip)
+    partnerPve = pve + level + enchants[resType]/100 + houseUpgrades[resType] + relicBoosts[resType]
+    totalBoost = (1 + partnerPve) * (1 + pvp) * (1 + vip)
 
     baseRes = getBaseRes(totalStat)
     resPerHarvest = round(baseRes * totalBoost * (1 - explorationPenalty))
@@ -394,7 +401,7 @@ def getRelicIncomeHr(data, enchantment):
 
   area = data["actions"]["monster_id"] // 100 * 0.05
   
-  if "kingdom" in data:
+  if "kingdom" in data and "explorationBoosts" in data["kingdom"]:
     exploration = data["kingdom"]["explorationBoosts"]["drop"] / 100
     kingdomTile = getTileBoost(data["kingdom"]["tiles"], "drop")
     villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
@@ -403,7 +410,7 @@ def getRelicIncomeHr(data, enchantment):
     kingdomTile = 0
     villageBoostTile = 0
 
-  if "village" in data:
+  if "village" in data and "boosts" in data["village"]:
     building = getBuildingBoost(data["village"]["boosts"]["market"])
     villageTile = getTileBoost(data["village"]["tiles"], "drop")
   else:

@@ -52,7 +52,7 @@ Prefix: ">"
 Shows the commands that can be given
 
 **ping**:
-The bot will send respond if it is active.
+The bot will send a response if it is active.
 
 **bind** (privileged command):
 Binds the bot to the current channel. The bot will only be able to send messages in the bound channel. Only users with the role "Leader" may use it.
@@ -61,7 +61,7 @@ Binds the bot to the current channel. The bot will only be able to send messages
 Pulls information from the game and updates the bot's information.
 
 **player [APIKey]**:
-Given an API key, it displays a player's investments.
+Given an API key, it displays a player's investments, income, and equipment stats.
 
 **tiles**:
 Displays currently held tiles in the kingdom.

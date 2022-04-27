@@ -7,6 +7,7 @@ A Discord bot for the browser game called Queslar.
 -   [About](#about)
 -   [How to set up](#setup)
 -   [Bot Commands](#bot-commands)
+-   [Explanation of the files](#code)
 
 ---
 
@@ -16,12 +17,12 @@ This repository contains code to set up a Discord bot for the PBBG called Quesla
 
 ### Setup
 
-First, create a discord bot and set up the hosting solution of your choice. If you are hosting it on Heroku, then you will find that the Procfile, requirements.txt, and runtime.txt is set up for you already. Please follow a tutorial to run it on Heroku. You will also need to set up your database, whether it is Redis or some other solution. If you are using another database, then all you need to do is to edit the database.py file.
+First, create a discord bot and set up the hosting solution of your choice. If you are hosting it on Heroku, then you will find that the Procfile, requirements.txt, and runtime.txt is set up for you already. Please find and follow a tutorial if you want to know how to run it on Heroku. You will also need to set up your database, whether it is Redis or some other solution. If you are using another database, then all you need to do is to edit the database.py file.
 
 To set this bot up, you will need the following:
 
 -   A discord bot's token
--   A player's API key
+-   A player's Queslar API key
 -   The channel id that the bot will send messages to.
 -   Your database credentials. For Redis it is URL, port, and password.
 
@@ -71,3 +72,22 @@ Only users with the role "Leader" may use it.
 **stop**: Stops the timer.  
 **restart**: Restarts the timer.  
 **info**: Displays when the exploration will end.
+
+### Code
+
+Here is an explanation of each Python file in this repository and what they do:
+
+**main.py**  
+The main entry into the program, this is what you run to run the entire thing. It creates an instance of the bot, and handles any commands that users use on the bot. 
+
+**qsBot.py**  
+The bot will handle commands using functions written in this file. The functions are separated from the commands for simple organization. There is also a function that runs every 5 minutes to check on tile updates, in hindsight this should have been in a separate file. I'm lucky that the scheduled task can still access the instance of the bot when it runs every 5 minutes.
+
+**calculator.py**  
+This is where misc functions dedicated to calculating the investment amounts go.
+
+**database.py**
+This is where database operations happen. The detached nature of this file means that the database can be easily replaced to some other database.
+
+**market.py and tile.py**
+These are objects, or "models". The bot will contain an instance of the market and tile, and will use them to do market/tile-specific operations. Yeah I just wanted to be object oriented.

@@ -10,7 +10,8 @@ class Market:
         "iron" : -1.0,
         "wood" : -1.0,
         "stone" : -1.0,
-        "relics" : -1.0
+        "relics" : -1.0,
+        "diamonds" : -1.0
       }) 
 
 
@@ -25,7 +26,7 @@ class Market:
     for item in newPrices:
       currency = item["currency_type"]
       newPrice = self.prices.get(currency, 0)
-      #Only update if it's one of the 5 types in self.prices
+      #Only update if it's one of the 6 types in self.prices
       if item["market_type"] == "buy" and newPrice:
         self.prices[currency] = str(item["price"])
     
@@ -66,7 +67,9 @@ class Market:
     '''
     Return a truncated str version of the price
     '''
-    if price // 1000000000000 > 0: #trillion
+    if price // 1000000000000000 > 0: #quadrillion
+      trunc = str(price / 1000000000000000)
+    elif price // 1000000000000 > 0: #trillion
       trunc = str(price / 1000000000000)
       return trunc[:trunc.find(".")+3] + "t"
     elif price // 1000000000 > 0: #billion
@@ -81,3 +84,10 @@ class Market:
     else:
       trunc = str(price/1)
       return trunc[:trunc.find(".")+3]
+
+
+  def __str__(self):
+    return "Meat: {}\nIron: {}\nWood: {}\nStone: {}\nRelics: {}\nDiamonds: {}".format(
+      self.prices["meat"],self.prices["iron"],self.prices["wood"],self.prices["stone"],
+      self.prices["relics"],self.prices["diamonds"]
+    )

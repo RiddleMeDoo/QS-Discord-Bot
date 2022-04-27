@@ -22,6 +22,7 @@ async def help(ctx):
   em.add_field(name="Update",value=">update",inline=False)
   em.add_field(name="Tiles",value=">tiles",inline=False)
   em.add_field(name="Timer",value=">timer [stop|restart|info]",inline=False)
+  em.add_field(name="Stored Market Prices", value=">prices",inline=False)
 
   await ctx.send(embed=em)
 
@@ -70,6 +71,12 @@ async def help_timer(ctx):
 
   await ctx.send(embed=em)
 
+@help.command(name="prices")
+async def help_prices(ctx):
+  em = discord.Embed(title="Current Market Prices", description="Displays market prices stored by the bot.", color=ctx.author.color)
+  em.add_field(name="**Usage**",value=">prices")
+
+  await ctx.send(embed=em)
 
 @client.command()
 async def ping(ctx):
@@ -106,6 +113,11 @@ async def display_investments(ctx, key):
   msg = await client.get_player_investments(key)
   await ctx.send(msg)
 
+
+@client.command(name="prices")
+async def display_prices(ctx):
+  msg = await client.get_market()
+  await ctx.send(msg)
 
 
 @client.group(invoke_without_command=True)

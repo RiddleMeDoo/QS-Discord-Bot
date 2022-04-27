@@ -51,6 +51,17 @@ class QueslarBot(commands.Bot):
     await self.notificationChannel.send("@here Exploration done!")
 
 
+  async def alert_reminder(self):
+    '''
+    Sends a reminder to the notification channel when
+    the exploration is nearly finished.
+    '''
+    await self.notificationChannel.send(
+      "@here Exploration will end in {} minutes."
+      .format(self.exploration.get_reminder_interval())
+    )
+
+
   async def alert_test(self):
     '''
     Debugging method for sending test message
@@ -98,8 +109,10 @@ class QueslarBot(commands.Bot):
     # Start exploration timer if there isn't one
     if len(self.scheduler.get_jobs()) == 0 and not self.exploration.is_done():
       end = self.exploration.get_end_time()
+      remind = self.exploration.get_reminder_time()
       self.scheduler.add_job(self.alert_exploration, "date", run_date=end, id='exploration')
-      #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='exploration') #Debugging alerts
+      self.scheduler.add_job(self.alert_reminder, "date", run_date=remind, id='explorationReminder')
+      #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='test') #Debugging alerts
       print("Starting alert for {} UTC...".format(end))
 
     # Save data to the cloud database
@@ -206,6 +219,7 @@ class QueslarBot(commands.Bot):
   async def stop_timer(self):
     self.scheduler.pause()
     self.scheduler.remove_job("exploration")
+    self.scheduler.remove_job("explorationReminder")
 
   async def restart_timer(self):
     self.scheduler.resume()
@@ -218,10 +232,23 @@ class QueslarBot(commands.Bot):
     return str(self.exploration)
   
 
+  async def get_market(self):
+    '''
+    Return a formatted message containing market prices
+    '''
+    return """Last updated: {}
+    ```
+{}```""".format(self.db["market_last_updated"], str(self.market))
+
+
   async def get_player_investments(self, key):
-    if self.market.is_outdated() and not await self.market.update():
-      print("Market could not update.")
-      return "Market could not update."
+    if self.market.is_outdated():
+      if not await self.market.update():
+        print("Market could not update.")
+        return "Market could not update."
+      else:
+        self.db["market_last_updated"] = db.db_get("market_last_updated", "Unknown")
+
     data = await self.get_qs_data(key)
     if not data: return "Player key is not valid."
 
@@ -282,7 +309,7 @@ class QueslarBot(commands.Bot):
     caveUpgrades = ["archeology", "brush", "trowel", "map", "backpack", "torch", "scouting", "spade", "knife"]
 
     for tool in caveUpgrades:
-      caveInvestment += round(calc.getCaveInvestment(cave[tool]) * matPrice)
+      caveInvestment += calc.getCaveInvestment(cave[tool], matPrice, float(self.market.prices["diamonds"]))
    
     ### Relics
     boosts = data["boosts"]
@@ -322,6 +349,8 @@ class QueslarBot(commands.Bot):
     for type in hsLevels:
       homesteadInvestment += calc.getHomesteadInvestment(homestead[type]) * \
         float(self.market.prices[hsLevels[type]])
+    # Add plot investment too
+    homesteadInvestment += calc.getPlotInvestment(homestead["plots"]) * matPrice
     
     ### Pet experience (from decorations)
     decos = data.get("playerHomesteadDecorations", [])
@@ -406,7 +435,7 @@ Total Pet Exp Boost: {}%
       equipmentStats.append(totalStats)
 
       eqDamage += round(piece["damage"] * eqTiers[piece["damage_tier"]])
-      eqDefense += round(piece["defense"] * eqTiers[piece["defense_tier"]])
+      eqDefense += round(piece["defense"] * eqTiers[piece["defense_tier"]]) #TODO: Display proper dmg/def values including pet+gods
     
 
     msg += """Exp Enchants: {}% ({})\nGold Enchants: {}% ({})
@@ -421,10 +450,11 @@ Res Enchants: {}% ({})
       round(enchants["meat"][0]+enchants["iron"][0]+enchants["wood"][0]+enchants["stone"][0],2)
     )
 
-    msg += """Damage: {}    Defense: {}
-Left Hand Stats: {} ({}+{})\nRight Hand Stats: {} ({}+{})
-Helmet Stats: {} ({}+{})\nArmor Stats: {} ({}+{})\nGloves Stats: {} ({}+{})
-Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format( 
+    msg += """Damage: {:,}    Defense: {:,}
+Left Hand Stats: {:,} ({}+{})\nRight Hand Stats: {:,} ({}+{})
+Helmet Stats: {:,} ({}+{})\nArmor Stats: {:,} ({}+{})\nGloves Stats: {:,} ({}+{})
+Legging Stats: {:,} ({}+{})\nBoots Stats: {:,} ({}+{})
+---------------------------------------------------------------------\n""".format( 
       eqDamage, eqDefense,
       equipmentStats[0], eqSlotLevels[0], equipment[0]["slot_tier"],
       equipmentStats[1], eqSlotLevels[1], equipment[1]["slot_tier"],
@@ -433,6 +463,23 @@ Legging Stats: {} ({}+{})\nBoots Stats: {} ({}+{})```""".format(
       equipmentStats[4], eqSlotLevels[4], equipment[4]["slot_tier"],
       equipmentStats[5], eqSlotLevels[5], equipment[5]["slot_tier"],
       equipmentStats[6], eqSlotLevels[6], equipment[6]["slot_tier"]
+    )
+
+    ### Income info
+    ## Gold
+    goldPerDay = calc.getPersonalGoldIncome(data, enchants["gold"][1] / 100) * 14400
+    # Res
+    resPerDay = calc.getPartnerResIncomeHr(data) * 24
+    # Relics
+    relicsPerDay = calc.getRelicIncomeHr(data, enchants["drop"][1] / 100) * 24
+
+    msg += """Income (Party not included)
+Gold/day: {} ({:,})
+Res/day: {} ({:,})
+Relics/day: {} ({:,})```""".format( 
+      toStr(goldPerDay), goldPerDay, 
+      toStr(resPerDay), resPerDay, 
+      toStr(relicsPerDay), relicsPerDay
     )
     
     return msg

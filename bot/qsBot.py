@@ -306,7 +306,7 @@ class QueslarBot(commands.Bot):
     ### Cave
     cave = data["fighterCaveTools"]
     caveInvestment = 0
-    caveUpgrades = ["archeology", "brush", "trowel", "map", "backpack", "torch", "scouting", "spade", "knife"]
+    caveUpgrades = ["archeology", "brush", "trowel", "map", "backpack", "torch", "scouting", "spade", "knife", "compass"]
 
     for tool in caveUpgrades:
       caveInvestment += calc.getCaveInvestment(cave[tool], matPrice, float(self.market.prices["diamonds"]))

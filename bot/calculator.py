@@ -225,7 +225,7 @@ def getEnchantBoost(equipment, enchantType):
 def getPersonalGoldIncome(data, enchantment):
   # Current mob, Level, Enchant, Exploration, Building, Party, V-Tile, KD-Tile, village boost tile, VIP, Frenzy
   monster = data["actions"]["monster_id"]
-  level = data["skills"]["battling"] / 10000
+  level = data["skills"]["battling"] / 10000 * 1.5
 
   if "kingdom" in data and "explorationBoosts" in data["kingdom"]:
     exploration = data["kingdom"]["explorationBoosts"]["gold"] / 100
@@ -396,7 +396,7 @@ def getRelicIncomeHr(data, enchantment):
   dungeonLvl = data["playerFighterData"]["dungeon_level"]
 
   # Player
-  playerLvl = data["skills"]["battling"] / 10000
+  playerLvl = data["skills"]["battling"] / 10000 * 1.5
   dropAmount = 225 * (1 + 0.02 * dungeonLvl) * (1 + playerLvl)
 
   area = data["actions"]["monster_id"] // 100 * 0.05

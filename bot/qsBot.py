@@ -384,7 +384,7 @@ Total Pet Exp Boost: {}%
     totalInvestment = partnerInvestment + partnerCost + petCost + \
       fighterInvestment + fighterCost + eqSlotInvestment + \
       relicBattleInvestment + relicPartnerInvestment + \
-      houseInvestment + homesteadInvestment
+      houseInvestment + homesteadInvestment + caveInvestment
 
     msg += """Self Investment Total: {}
 ---------------------------------------------------------------------\n""".format(

@@ -411,7 +411,7 @@ def getRelicIncomeHr(data, enchantment):
     villageBoostTile = 0
 
   if "village" in data and "boosts" in data["village"]:
-    building = getBuildingBoost(data["village"]["boosts"]["market"])
+    building = getBuildingBoost(data["village"]["boosts"]["well"])
     villageTile = getTileBoost(data["village"]["tiles"], "drop")
   else:
     building = 0

@@ -182,6 +182,15 @@ def getTileBoost(tiles, boostType):
       boost += tile["resource_three_value"]
   return boost / 100
 
+def getMysteryTileBoost(kingdomData, boostType):
+  '''
+  Returns the mystery tile boost if the kingdom has one and the boost type matches
+  '''
+  if "mapMisc" in kingdomData and kingdomData["mapMisc"]["mystery_tile"] == boostType:
+    return getTileBoost(kingdomData["tiles"], "mystery")
+  else:
+    return 0
+
 def getGemBoost(equipped, boostType):
   '''
   Returns the total boost of a certain type, from a list of equipped items.
@@ -225,11 +234,11 @@ def getEnchantBoost(equipment, enchantType):
 def getPersonalGoldIncome(data, enchantment):
   # Current mob, Level, Enchant, Exploration, Building, Party, V-Tile, KD-Tile, village boost tile, VIP, Frenzy
   monster = data["actions"]["monster_id"]
-  level = data["skills"]["battling"] / 10000
+  level = data["skills"]["battling"] * 0.00015
 
   if "kingdom" in data and "explorationBoosts" in data["kingdom"]:
     exploration = data["kingdom"]["explorationBoosts"]["gold"] / 100
-    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "gold")
+    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "gold") + getMysteryTileBoost(data["kingdom"], "gold")
     villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
   else: 
     exploration = 0
@@ -335,7 +344,7 @@ def getPartnerResIncomeHr(data):
 
   if "kingdom" in data and "explorationBoosts" in data["kingdom"]:
     exploration = data["kingdom"]["explorationBoosts"]["resource"] / 100
-    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "resource")
+    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "resource") + getMysteryTileBoost(data["kingdom"], "resource")
     villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
     explorationPenalty = data["kingdom"]["activeExploration"]["cost"] / 100
   else: 
@@ -396,14 +405,14 @@ def getRelicIncomeHr(data, enchantment):
   dungeonLvl = data["playerFighterData"]["dungeon_level"]
 
   # Player
-  playerLvl = data["skills"]["battling"] / 10000
+  playerLvl = data["skills"]["battling"] / 10000 * 1.5
   dropAmount = 225 * (1 + 0.02 * dungeonLvl) * (1 + playerLvl)
 
   area = data["actions"]["monster_id"] // 100 * 0.05
   
   if "kingdom" in data and "explorationBoosts" in data["kingdom"]:
     exploration = data["kingdom"]["explorationBoosts"]["drop"] / 100
-    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "drop")
+    kingdomTile = getTileBoost(data["kingdom"]["tiles"], "drop") + getMysteryTileBoost(data["kingdom"], "drop")
     villageBoostTile = getTileBoost(data["kingdom"]["tiles"], "village")
   else: 
     exploration = 0
@@ -411,7 +420,7 @@ def getRelicIncomeHr(data, enchantment):
     villageBoostTile = 0
 
   if "village" in data and "boosts" in data["village"]:
-    building = getBuildingBoost(data["village"]["boosts"]["market"])
+    building = getBuildingBoost(data["village"]["boosts"]["well"])
     villageTile = getTileBoost(data["village"]["tiles"], "drop")
   else:
     building = 0

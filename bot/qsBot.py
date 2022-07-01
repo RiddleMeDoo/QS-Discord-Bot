@@ -48,7 +48,10 @@ class QueslarBot(commands.Bot):
     the exploration finishes.
     '''
     print("Alert: Exploration done.")
-    await self.notificationChannel.send("@here Exploration done!")
+    try:
+      await self.notificationChannel.send("@here Exploration done!")
+    except AttributeError:
+      print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
 
 
   async def alert_reminder(self):
@@ -56,10 +59,13 @@ class QueslarBot(commands.Bot):
     Sends a reminder to the notification channel when
     the exploration is nearly finished.
     '''
-    await self.notificationChannel.send(
-      "@here Exploration will end in {} minutes."
-      .format(self.exploration.get_reminder_interval())
-    )
+    try:
+      await self.notificationChannel.send(
+        "@here Exploration will end in {} minutes."
+        .format(self.exploration.get_reminder_interval())
+      )
+    except AttributeError:
+      print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
 
 
   async def alert_test(self):
@@ -67,7 +73,10 @@ class QueslarBot(commands.Bot):
     Debugging method for sending test message
     '''
     print("Alert test")
-    await self.notificationChannel.send("Test alert @here")
+    try:
+      await self.notificationChannel.send("Test alert @here")
+    except AttributeError:
+      print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
   
 
   @tasks.loop(minutes=5)
@@ -208,13 +217,20 @@ class QueslarBot(commands.Bot):
       gainedMsg = discord.Embed(title="Tile(s) Gained:", color=0x00ff00)
       for coords, boostType in gained:
         gainedMsg.add_field(name=coords, value=boostType, inline=False)
-      await self.notificationChannel.send(embed=gainedMsg)
+      try:
+        await self.notificationChannel.send(embed=gainedMsg)
+      except AttributeError:
+        print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
+
 
     if len(lost) != 0:
       lostMsg = discord.Embed(title="Tile(s) Lost:", color=0xce0000)
       for coords, boostType in lost:
         lostMsg.add_field(name=coords, value=boostType, inline=False)
-      await self.notificationChannel.send("@here", embed=lostMsg)
+      try:
+        await self.notificationChannel.send("@here", embed=lostMsg)
+      except AttributeError:
+        print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
 
   async def stop_timer(self):
     self.scheduler.pause()
@@ -306,7 +322,7 @@ class QueslarBot(commands.Bot):
     ### Cave
     cave = data["fighterCaveTools"]
     caveInvestment = 0
-    caveUpgrades = ["archeology", "brush", "trowel", "map", "backpack", "torch", "scouting", "spade", "knife"]
+    caveUpgrades = ["archeology", "brush", "trowel", "map", "backpack", "torch", "scouting", "spade", "knife", "compass"]
 
     for tool in caveUpgrades:
       caveInvestment += calc.getCaveInvestment(cave[tool], matPrice, float(self.market.prices["diamonds"]))
@@ -384,7 +400,7 @@ Total Pet Exp Boost: {}%
     totalInvestment = partnerInvestment + partnerCost + petCost + \
       fighterInvestment + fighterCost + eqSlotInvestment + \
       relicBattleInvestment + relicPartnerInvestment + \
-      houseInvestment + homesteadInvestment
+      houseInvestment + homesteadInvestment + caveInvestment
 
     msg += """Self Investment Total: {}
 ---------------------------------------------------------------------\n""".format(

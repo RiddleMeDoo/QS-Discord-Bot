@@ -3,7 +3,7 @@ import redis
 import os
 import json
 
-Connect to database
+# Connect to database
 redisDB = redis.Redis(
   host=os.getenv("REDIS_HOSTNAME"),
   port=os.getenv("REDIS_PORT"),

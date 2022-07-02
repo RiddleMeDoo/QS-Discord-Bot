@@ -3,14 +3,13 @@ import redis
 import os
 import json
 
-# Connect to database
-# redis = redis.Redis(
-#   host=os.getenv("REDIS_HOSTNAME"),
-#   port=os.getenv("REDIS_PORT"),
-#   password=os.getenv("REDIS_PASSWORD"),
-#   decode_responses=True
-# )
-redisDB = redis.from_url(os.environ.get("REDIS_URL"))
+Connect to database
+redisDB = redis.Redis(
+  host=os.getenv("REDIS_HOSTNAME"),
+  port=os.getenv("REDIS_PORT"),
+  password=os.getenv("REDIS_PASSWORD"),
+  decode_responses=True
+)
 
 # Store
 def db_set(key, value):

@@ -125,7 +125,9 @@ async def timer(ctx):
   em = discord.Embed(title="Subcommands", description="", color=ctx.author.color)
   em.add_field(name="stop",value="Stops the timer.",inline=False)
   em.add_field(name="restart",value="Restarts the timer.",inline=False)
+  em.add_field(name="reminder", value="Sets the number of minutes to send a reminder ping from the end of the exploration.", inline=False)
   em.add_field(name="info",value="Displays when the exploration will end.",inline=False)
+  em.add_field(name="reminderInfo", value="Displays when the reminder alert will go off.", inline=False)
   em.add_field(name="**Usage**",value=">timer <subcommand>",inline=False)
 
   await ctx.send("Please use a subcommand below.", embed=em)
@@ -145,6 +147,18 @@ async def restart_timer(ctx):
   await ctx.send("Restarted the timer.")
   await print_timer(ctx)
 
+@timer.command(name="reminder")
+@has_role("Leader")
+async def set_reminder_timer(ctx, time):
+  try:
+    msg = await client.set_exploration_reminder_alert(time)
+    await ctx.send(msg)
+  except ValueError as e:
+    await ctx.send("Invalid number of minutes.")
+
+@timer.command(name="reminderInfo")
+async def get_reminder_timer(ctx):
+  await ctx.send("Reminder alert sets off at {} UTC".format(client.get_exploration_reminder_time()))
 
 @timer.command(name="info")
 async def print_timer(ctx):

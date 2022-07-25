@@ -6,6 +6,7 @@ load_dotenv()
 import os
 import aiohttp
 from datetime import datetime
+from datetime import timedelta
 import json
 from tile import Tile
 from exploration import Exploration
@@ -23,11 +24,6 @@ class QueslarBot(commands.Bot):
     super().__init__(*args, **kwargs)
     
     self.db = db.db_get_all()
-
-    if "channelId" not in self.db:
-      self.db["channelId"] = os.environ['NOTIFY_CHANNEL']
-
-    
     self.notificationChannel = None #Initialized in setup_loop
 
     self.tiles = [Tile(t) for t in self.db.get("tiles", [])]
@@ -51,21 +47,29 @@ class QueslarBot(commands.Bot):
     try:
       await self.notificationChannel.send("@here Exploration done!")
     except AttributeError:
-      print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
+      print("Error: Could not send message to notification channel {}. Bot could not find the specified channel."
+      .format(self.notificationChannel.id))
 
 
   async def alert_reminder(self):
     '''
     Sends a reminder to the notification channel when
-    the exploration is nearly finished.
+    the exploration is finished, unless there is a new exploration already running.
     '''
     try:
-      await self.notificationChannel.send(
-        "@here Exploration will end in {} minutes."
-        .format(self.exploration.get_reminder_interval())
-      )
+      if self.exploration.get_reminder_interval() < 0:
+        await self.notificationChannel.send(
+          "@here Exploration will end in {} minutes."
+          .format(int(self.exploration.get_reminder_interval()) * -1) # Number needs to be positive
+        )
+      else:
+        await self.notificationChannel.send(
+          "@here Exploration alert! Check if the exploration is ready to start again."
+          .format(self.exploration.get_reminder_interval())
+        )
     except AttributeError:
-      print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
+      print("Error: Could not send message to notification channel {}. Bot could not find the specified channel."
+      .format(self.notificationChannel.id))
 
 
   async def alert_test(self):
@@ -76,7 +80,8 @@ class QueslarBot(commands.Bot):
     try:
       await self.notificationChannel.send("Test alert @here")
     except AttributeError:
-      print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
+      print("Error: Could not send message to notification channel {}. Bot could not find the specified channel."
+      .format(self.notificationChannel.id))
   
 
   @tasks.loop(minutes=5)
@@ -116,10 +121,13 @@ class QueslarBot(commands.Bot):
       print("{}> Failed to get API data".format(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
 
     # Start exploration timer if there isn't one
-    if len(self.scheduler.get_jobs()) == 0 and not self.exploration.is_done():
+    if not self.scheduler.get_job("exploration") and not self.exploration.is_done():
       end = self.exploration.get_end_time()
       remind = self.exploration.get_reminder_time()
       self.scheduler.add_job(self.alert_exploration, "date", run_date=end, id='exploration')
+      
+      if self.scheduler.get_job("explorationReminder"): # Reset the timer if there is one
+        self.scheduler.remove_job("explorationReminder")
       self.scheduler.add_job(self.alert_reminder, "date", run_date=remind, id='explorationReminder')
       #self.scheduler.add_job(self.alert_test, "interval", minutes=1, id='test') #Debugging alerts
       print("Starting alert for {} UTC...".format(end))
@@ -135,8 +143,12 @@ class QueslarBot(commands.Bot):
     await self.wait_until_ready()
     #Initialize channel
     self.notificationChannel = self.get_channel(int(self.db.get("channelId")))
-    if(not self.notificationChannel):
-      print("Failed to find channel.")
+
+    if not self.notificationChannel:  # Second attempt
+      self.notificationChannel = self.get_channel(int(os.environ['NOTIFY_CHANNEL']))
+
+    if not self.notificationChannel:
+      print("Failed to find channel id {}.".format(self.db.get("channelId")))
 
 
   async def get_qs_data(self, key=os.environ['QS_KEY']):
@@ -192,6 +204,8 @@ class QueslarBot(commands.Bot):
     '''
     self.db["channelId"] = channel.id
     self.notificationChannel = channel
+    db.db_set("channelId", channel.id)
+    print("Set notification channel to id", channel.id)
 
 
   def get_tiles(self):
@@ -220,7 +234,9 @@ class QueslarBot(commands.Bot):
       try:
         await self.notificationChannel.send(embed=gainedMsg)
       except AttributeError:
-        print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
+        print("Error: Could not send message to notification channel {}. Bot could not find the specified channel."
+        .format(self.notificationChannel.id))
+        return
 
 
     if len(lost) != 0:
@@ -230,12 +246,15 @@ class QueslarBot(commands.Bot):
       try:
         await self.notificationChannel.send("@here", embed=lostMsg)
       except AttributeError:
-        print("Error: Could not send message to notification channel. Bot could not find the specified channel.")
+        print("Error: Could not send message to notification channel {}. Bot could not find the specified channel."
+      .format(self.notificationChannel.id))
 
   async def stop_timer(self):
     self.scheduler.pause()
-    self.scheduler.remove_job("exploration")
-    self.scheduler.remove_job("explorationReminder")
+    if self.scheduler.get_job("exploration"):
+      self.scheduler.remove_job("exploration")
+    if self.scheduler.get_job("explorationReminder"):
+      self.scheduler.remove_job("explorationReminder")
 
   async def restart_timer(self):
     self.scheduler.resume()
@@ -247,6 +266,24 @@ class QueslarBot(commands.Bot):
 
     return str(self.exploration)
   
+  async def set_exploration_reminder_alert(self, minutes):
+    try:
+      if datetime.now() >= self.exploration.get_end_time() + timedelta(minutes=int(minutes)):
+        return "{} minutes sets the reminder in the past! Please try again.".format(minutes)
+      self.exploration.set_reminder_time(int(minutes))
+      # Set new alert if it's running already
+      if self.scheduler.get_job("explorationReminder"):
+        self.scheduler.remove_job("explorationReminder")
+        self.scheduler.add_job(self.alert_reminder, "date", run_date=self.exploration.get_reminder_time(), id='explorationReminder')
+        return "Set the new reminder to be {} minutes from the end, at {} UTC".format(
+          minutes, self.exploration.get_reminder_time().strftime("%Y-%m-%d %H:%M:%S")
+        )
+    except ValueError as e:
+      print(e)
+      raise
+
+  def get_exploration_reminder_time(self):
+    return self.exploration.get_reminder_time().strftime("%Y-%m-%d %H:%M:%S")
 
   async def get_market(self):
     '''

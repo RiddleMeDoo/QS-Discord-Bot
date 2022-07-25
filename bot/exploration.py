@@ -4,7 +4,7 @@ from datetime import timedelta
 class Exploration:
   def __init__(self, endTime):
     self.end = datetime.strptime(endTime, "%Y-%m-%dT%H:%M:%S.000Z")
-    self.reminderInterval = 40
+    self.reminderInterval = 30
 
   def get_end_time(self):
     '''
@@ -18,10 +18,16 @@ class Exploration:
   def get_reminder_time(self):
     '''
     Returns a datetime format of the end of the exploration timer,
-    but 40 minutes earlier than the end time.
+    but reminderInterval minutes after the end time.
     '''
-    return self.end - timedelta(minutes=self.reminderInterval)
+    return self.end + timedelta(minutes=self.reminderInterval)
 
+  def set_reminder_time(self, minutes):
+    '''
+    Sets the reminder timer to be x minutes after the exploration ends.
+    Negative numbers will make the reminder go off x minutes before the exploration ends.
+    '''
+    self.reminderInterval = minutes
 
   def get_reminder_interval(self):
     return self.reminderInterval

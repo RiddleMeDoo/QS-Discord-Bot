@@ -275,7 +275,7 @@ class QueslarBot(commands.Bot):
       if self.scheduler.get_job("explorationReminder"):
         self.scheduler.remove_job("explorationReminder")
         self.scheduler.add_job(self.alert_reminder, "date", run_date=self.exploration.get_reminder_time(), id='explorationReminder')
-        return "Set the new reminder to be {} minutes from the end, at {} UTC".format(
+        return "Set the new reminder to be {} minutes after the end, at {} UTC".format(
           minutes, self.exploration.get_reminder_time().strftime("%Y-%m-%d %H:%M:%S")
         )
     except ValueError as e:

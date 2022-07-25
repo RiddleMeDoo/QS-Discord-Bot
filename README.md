@@ -70,4 +70,6 @@ _Subcommand: stop, restart, or info_
 Only users with the role "Leader" may use it.  
 **stop**: Stops the timer.  
 **restart**: Restarts the timer.  
-**info**: Displays when the exploration will end.
+**reminder**: Sets a reminder alert for x number of minutes after the end of the exploration. It can be negative or positive.  
+**info**: Displays when the exploration will end.  
+**reminderInfo**: Displays when the reminder alert will trigger.
